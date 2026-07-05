@@ -146,7 +146,7 @@ describe('runSwarmOrchestration — pełny cykl end-to-end (fetch zmockowany)', 
     expect(state.agents.reviewer.status).toBe('success');
   });
 
-  it('kończy błędem po 3 nieudanych iteracjach, gdy kod realnie oblewa testy', async () => {
+  it('kończy błędem po wyczerpaniu iteracji, gdy kod realnie oblewa testy', async () => {
     vi.stubGlobal('fetch', makeFetch({
       architect: { explanation: 'Plan.', blueprint: 'memoizacja' },
       coder: { explanation: 'Błędny kod.', code: 'function fib(n){ return n; }' }, // fib(10)=10 ≠ 55

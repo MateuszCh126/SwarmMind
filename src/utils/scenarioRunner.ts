@@ -38,7 +38,9 @@ export async function runSwarmOrchestration() {
   const settings = store.settings;
   
   let currentIteration = 1;
-  const maxIterations = 3;
+  // Rój pętli aż osiągnie cel; sufit chroni przed nieskończonym zużyciem API,
+  // gdy zadanie jest sprzeczne lub model nie potrafi go domknąć.
+  const maxIterations = 10;
   
   let blueprint = '';
   let refactoredCode = '';
