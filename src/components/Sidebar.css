@@ -1,5 +1,7 @@
 .sidebar {
   width: var(--sidebar-width);
+  min-width: var(--sidebar-width);
+  flex-shrink: 0; /* nie pozwól flexboxowi ścisnąć panelu, gdy otwarty jest inspector */
   height: 100%;
   border-right: 1px solid var(--border-color);
   border-radius: 0;

@@ -1,5 +1,7 @@
 .center-workspace {
   flex-grow: 1;
+  flex-shrink: 1;
+  min-width: 0; /* pozwól środkowi się kurczyć zamiast wypychać panele boczne */
   display: flex;
   flex-direction: column;
   height: 100%;

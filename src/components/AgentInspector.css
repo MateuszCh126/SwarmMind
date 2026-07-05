@@ -1,5 +1,7 @@
 .inspector {
   width: var(--inspector-width);
+  min-width: var(--inspector-width);
+  flex-shrink: 0; /* stała szerokość — nie ściskaj panelu inspektora */
   height: 100%;
   border-left: 1px solid var(--border-color);
   background-color: var(--bg-secondary);
