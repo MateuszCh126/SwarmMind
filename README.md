@@ -20,7 +20,8 @@ To deliver a premium, fluid desktop application experience inspired by Apple des
 
 ### 3. Real AI Multi-Agent Loop (No Mocks)
 Instead of hardcoding a simulated timeline, the swarm runs real API requests:
-*   **Unified Client-Side Connectors:** Directly queries Google Gemini (`gemini-2.5-flash`), OpenAI (`gpt-4o-mini`), or Anthropic Claude (using direct browser access headers).
+*   **Unified Client-Side Connectors:** Directly queries Google Gemini (`gemini-2.5-flash`), OpenAI (`gpt-4o-mini`), or Anthropic Claude (`claude-sonnet-5`, using direct browser access headers). Model IDs live in a single source of truth (`PROVIDER_MODELS` in `llmService.ts`).
+*   **Really Executed Tests (No Simulation):** The **TracerTester** does not *pretend* to run tests. The refactored code and the generated test suite are executed for real inside a sandboxed **Web Worker** (`testRunner.ts` + `testHarness.ts`), with a hard 5s timeout that `terminate()`s runaway/infinite-loop code before it can freeze the UI. A minimal Vitest-style harness (`describe`/`it`/`expect`) collects genuine pass/fail results, which the **SpecterReviewer** then judges. Because execution happens in the browser, the refactoring target must be runnable **JavaScript** (JSDoc for typing) — non-JS input reports an honest execution error rather than a fabricated `PASS`.
 *   **localStorage Security Trade-offs:** API keys are stored client-side in the browser's `localStorage` for user convenience. While this is acceptable for a frontend CV/portfolio showcase, storing secrets in `localStorage` exposes them to XSS attacks in production. For a commercial project, these credentials should be stored in a secure backend session or a proxy server. Keys are *never* sent to any third-party server besides the official AI provider endpoints.
 *   **Recursive Feedback Loop:** The review cycle is fully automated. If the **SpecterReviewer** rejects the code produced by **ValkyrieCoder** due to test failures or design issues, the state machine automatically routes the critique back to the Coder. This cycle loops recursively up to a maximum of 3 times before declaring success or failure.
 
@@ -39,7 +40,10 @@ src/
 ├── store/
 │   └── useSwarmStore.ts    # Zustand state store & actions
 ├── services/
-│   └── llmService.ts       # Unified fetch wrapper for Gemini, OpenAI, Claude
+│   ├── llmService.ts       # Unified fetch wrapper + PROVIDER_MODELS (single source of truth)
+│   ├── testHarness.ts      # Pure describe/it/expect harness — real assertion execution
+│   ├── testRunner.ts       # Web Worker wrapper: isolation + 5s timeout guard
+│   └── testWorker.ts       # Worker entrypoint running the harness off the main thread
 ├── utils/
 │   └── scenarioRunner.ts   # Swarm orchestration loop (State Machine)
 ├── components/
@@ -51,7 +55,8 @@ src/
 │   └── SettingsModal.tsx   # Secured API credentials drawer
 └── __tests__/
     ├── useSwarmStore.test.ts  # Zustand state transition tests
-    └── llmService.test.ts     # JSON Markdown parsing test suites
+    ├── llmService.test.ts     # JSON Markdown parsing test suites
+    └── testHarness.test.ts    # Real test-runner: pass/fail/syntax-error/mixed cases
 ```
 
 ---
@@ -61,6 +66,7 @@ src/
 We use **Vitest** for running lightweight and lightning-fast unit tests. Our tests cover:
 1.  **Zustand Store Actions:** Verification of `startSwarm`, `addLog`, `updateAgent`, `togglePause`, and `resetSwarm` state mutations.
 2.  **LLM Service Parsing:** Validating that markdown code fences (e.g. ```json ... ```) are correctly stripped from AI outputs to prevent JSON parser failures.
+3.  **Test Harness:** Proving the runner really executes code — correct code passes, buggy code genuinely fails, syntax errors and infinite loops are caught, and empty suites report an error instead of a false success.
 
 To run the test suite:
 ```bash
