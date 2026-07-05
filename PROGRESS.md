@@ -24,10 +24,12 @@ Kod pisze subagent Haiku (model `haiku`); ja projektuję, weryfikuję grep-em + 
 - Historia przebiegów w localStorage: modal „Historia" (do 20 wpisów), badge sukces/błąd,
   pobieranie raportu każdego przebiegu, czyszczenie. Zapis przy sukcesie i błędzie roju.
 
+- „Testuj klucz" w Ustawieniach: realny, lekki ping do API wybranego providera
+  (200 = OK, 429 = klucz OK ale limit, 401/403 = odrzucony). Waliduje zanim odpalisz rój.
+
 ## Następne (kolejność)
 4. [ ] **Diff**: oryginał vs zrefaktoryzowany kod (side-by-side lub podświetlenie).
 5. [ ] **Edytowalne system prompty agentów** w Inspectorze (realna konfiguracja).
-6. [ ] **„Testuj klucz"** w Ustawieniach — realny ping do API wybranego providera.
 7. [ ] **Metryki**: czas i (jeśli API zwraca) zużycie tokenów per agent.
 8. [ ] **Dostępność/responsywność**: focus, prefers-reduced-motion, mobile.
 9. [ ] **Ponów pojedynczy krok** agenta ręcznie po błędzie.

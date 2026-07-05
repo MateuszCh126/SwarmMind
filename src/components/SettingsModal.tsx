@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useSwarmStore } from '../store/useSwarmStore';
+import { pingProvider } from '../services/llmService';
 import './SettingsModal.css';
 
 interface SettingsModalProps {
@@ -16,8 +17,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   const [anthropicKey, setAnthropicKey] = useState(settings.anthropicKey);
   const [openrouterKey, setOpenrouterKey] = useState(settings.openrouterKey);
   const [preferProvider, setPreferProvider] = useState(settings.preferProvider);
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ ok: boolean; text: string } | null>(null);
 
   if (!isOpen) return null;
+
+  const handleTest = async () => {
+    setTesting(true);
+    setTestResult(null);
+    const res = await pingProvider({ geminiKey, openaiKey, anthropicKey, openrouterKey, preferProvider });
+    setTestResult({ ok: res.ok, text: res.message });
+    setTesting(false);
+  };
 
   const handleSave = () => {
     setSettings({
@@ -124,6 +135,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             />
             <span className="field-hint">Darmowe do testów: załóż konto na openrouter.ai, wygeneruj klucz (sk-or-...). Model: deepseek-v3 :free.</span>
           </div>
+        </div>
+
+        <div className="settings-test">
+          <button type="button" className="btn-test" onClick={handleTest} disabled={testing}>
+            {testing ? 'Testuję…' : 'Testuj klucz'}
+          </button>
+          {testResult && (
+            <span className={`test-result ${testResult.ok ? 'ok' : 'fail'}`}>{testResult.text}</span>
+          )}
         </div>
 
         <div className="modal-footer">

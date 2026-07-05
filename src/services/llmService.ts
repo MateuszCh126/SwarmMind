@@ -1,4 +1,5 @@
 import type { AgentId, SwarmSettings } from '../types';
+import { friendlyError } from '../utils/friendlyError';
 
 // Centralne ID modeli per provider — jedno źródło prawdy dla wywołań API i etykiet w UI.
 export const PROVIDER_MODELS = {
@@ -272,4 +273,60 @@ function callAnthropic(key: string, system: string, user: string): Promise<any> 
     'Anthropic',
     (data) => data.content?.[0]?.text
   );
+}
+
+// Lekki, REALNY test klucza wybranego providera — minimalne zapytanie i interpretacja
+// statusu HTTP (200 = OK, 429 = klucz OK ale limit, 401/403 = odrzucony). Bez retry,
+// bez parsowania treści — sprawdzamy tylko, czy klucz jest akceptowany.
+export async function pingProvider(settings: SwarmSettings): Promise<{ ok: boolean; message: string }> {
+  const p = settings.preferProvider;
+  const key = p === 'gemini' ? settings.geminiKey
+    : p === 'openai' ? settings.openaiKey
+    : p === 'openrouter' ? settings.openrouterKey
+    : settings.anthropicKey;
+
+  if (!key) {
+    return { ok: false, message: 'Brak klucza — wklej go w polu powyżej.' };
+  }
+
+  try {
+    let res: HttpResult;
+    if (p === 'gemini') {
+      res = await postForText(
+        `https://generativelanguage.googleapis.com/v1beta/models/${PROVIDER_MODELS.gemini}:generateContent`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+          body: JSON.stringify({ contents: [{ parts: [{ text: 'ping' }] }], generationConfig: { maxOutputTokens: 1 } }) },
+        0
+      );
+    } else if (p === 'openrouter') {
+      res = await postForText(
+        'https://openrouter.ai/api/v1/chat/completions',
+        { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+          body: JSON.stringify({ model: PROVIDER_MODELS.openrouter, messages: [{ role: 'user', content: 'ping' }], max_tokens: 1 }) },
+        0
+      );
+    } else if (p === 'openai') {
+      res = await postForText(
+        'https://api.openai.com/v1/chat/completions',
+        { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+          body: JSON.stringify({ model: PROVIDER_MODELS.openai, messages: [{ role: 'user', content: 'ping' }], max_tokens: 1 }) },
+        0
+      );
+    } else {
+      res = await postForText(
+        'https://api.anthropic.com/v1/messages',
+        { method: 'POST', headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
+          body: JSON.stringify({ model: PROVIDER_MODELS.anthropic, max_tokens: 1, messages: [{ role: 'user', content: 'ping' }] }) },
+        0
+      );
+    }
+
+    if (res.ok) return { ok: true, message: 'Klucz działa — połączenie OK.' };
+    if (res.status === 429) return { ok: true, message: 'Klucz poprawny, ale trafił limit (429). Zadziała za chwilę.' };
+    const fe = friendlyError(`(${res.status}) ${res.body}`);
+    return { ok: false, message: fe.hint ? `${fe.message} ${fe.hint}` : fe.message };
+  } catch (e: any) {
+    const fe = friendlyError(String(e?.message || e));
+    return { ok: false, message: fe.hint ? `${fe.message} ${fe.hint}` : fe.message };
+  }
 }

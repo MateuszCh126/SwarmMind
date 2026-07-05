@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { cleanJSONString, callLLM } from '../services/llmService';
+import { cleanJSONString, callLLM, pingProvider } from '../services/llmService';
 import type { SwarmSettings } from '../types';
 
 describe('llmService JSON Parser Helper', () => {
@@ -117,6 +117,33 @@ describe('callLLM — odporność na przejściowe błędy sieci', () => {
     await expect(
       callLLM({ agentId: 'architect', agentRole: '', systemPrompt: 's', userPrompt: 'u', settings: baseSettings })
     ).rejects.toThrow(/nieprawidłowa po ponowieniach/);
+  });
+
+  it('pingProvider: brak klucza -> ok:false', async () => {
+    const res = await pingProvider({ ...baseSettings, openrouterKey: '' });
+    expect(res.ok).toBe(false);
+    expect(res.message).toMatch(/Brak klucza/i);
+  });
+
+  it('pingProvider: HTTP 200 -> klucz działa', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, status: 200, text: async () => '{}' } as unknown as Response)));
+    const res = await pingProvider(baseSettings);
+    expect(res.ok).toBe(true);
+    expect(res.message).toMatch(/działa/i);
+  });
+
+  it('pingProvider: HTTP 429 -> klucz OK ale limit', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 429, text: async () => 'quota' } as unknown as Response)));
+    const res = await pingProvider(baseSettings);
+    expect(res.ok).toBe(true);
+    expect(res.message).toMatch(/limit/i);
+  });
+
+  it('pingProvider: HTTP 401 -> klucz odrzucony', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 401, text: async () => 'unauthorized' } as unknown as Response)));
+    const res = await pingProvider(baseSettings);
+    expect(res.ok).toBe(false);
+    expect(res.message).toMatch(/klucz/i);
   });
 });
 export {};
