@@ -19,9 +19,10 @@ Kod pisze subagent Haiku (model `haiku`); ja projektuję, weryfikuję grep-em + 
 - Agenci „gadają ładnie" + pętla do celu: Tester testuje faktyczny kontrakt (toThrow
   gdy kod rzuca), Reviewer ma jasny próg akceptacji (nie nitpickuje), maxIterations=10.
 
+- Eksport wyniku: przycisk „Pobierz wynik (.md)" — raport z kodem, testami, wynikiem, review.
+
 ## Następne (kolejność)
-2. [ ] **Eksport wyniku**: pobranie finalnego kodu + testów (przycisk download).
-3. [ ] **Historia przebiegów** w localStorage (lista, podgląd, wznowienie).
+3. [ ] **Historia przebiegów** w localStorage (lista, podgląd poprzednich wyników).
 4. [ ] **Diff**: oryginał vs zrefaktoryzowany kod (side-by-side lub podświetlenie).
 5. [ ] **Edytowalne system prompty agentów** w Inspectorze (realna konfiguracja).
 6. [ ] **„Testuj klucz"** w Ustawieniach — realny ping do API wybranego providera.

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useSwarmStore } from '../store/useSwarmStore';
 import { runSwarmOrchestration } from '../utils/scenarioRunner';
+import { exportSwarmResult } from '../utils/exportResult';
 import './Sidebar.css';
 
 const defaultCode = `// Ta funkcja liczy liczby fibonacziego ale jest bardzo wolna i nieoptymalna
@@ -145,6 +146,24 @@ export const Sidebar: React.FC = () => {
           Resetuj
         </button>
       </div>
+
+      {store.agents.coder.codeContent && (
+        <button
+          type="button"
+          className="btn-action export-btn"
+          onClick={() => exportSwarmResult({
+            goal: store.goal,
+            inputCode: store.inputCode,
+            blueprint: store.agents.architect.codeContent || '',
+            code: store.agents.coder.codeContent || '',
+            tests: store.agents.tester.codeContent || '',
+            testResults: store.agents.tester.testContent || '',
+            reviewerFeedback: store.agents.reviewer.feedback || ''
+          })}
+        >
+          Pobierz wynik (.md)
+        </button>
+      )}
 
       <div className="sidebar-section tasks-section">
         <h3>3. Postęp Zadań</h3>
