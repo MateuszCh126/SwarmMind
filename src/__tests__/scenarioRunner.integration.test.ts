@@ -52,7 +52,6 @@ function primeStore() {
   const store = useSwarmStore.getState();
   store.resetSwarm();
   store.setSettings({ preferProvider: 'gemini', geminiKey: 'test-key' });
-  store.setSpeed(100); // skraca sztuczne opóźnienia do ~kilku ms
   store.startSwarm('Zoptymalizuj fib', 'function fib(n){return n<2?n:fib(n-1)+fib(n-2);}');
 }
 

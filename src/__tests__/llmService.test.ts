@@ -59,7 +59,7 @@ describe('llmService JSON Parser Helper', () => {
 describe('callLLM — odporność na przejściowe błędy sieci', () => {
   const baseSettings: SwarmSettings = {
     geminiKey: '', openaiKey: '', anthropicKey: '', openrouterKey: 'k',
-    preferProvider: 'openrouter', speed: 1
+    preferProvider: 'openrouter'
   };
 
   afterEach(() => vi.unstubAllGlobals());

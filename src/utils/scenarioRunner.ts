@@ -3,12 +3,6 @@ import { callLLM } from '../services/llmService';
 import { runTests } from '../services/testRunner';
 import type { AgentId } from '../types';
 
-// Helper to wait for a given duration (adjustable by speed factor)
-const delay = (ms: number) => {
-  const speed = useSwarmStore.getState().settings.speed;
-  return new Promise((resolve) => setTimeout(resolve, ms / speed));
-};
-
 // LLM-y (zwłaszcza w trybie responseMimeType: application/json) potrafią zwrócić
 // pole jako zagnieżdżony obiekt/tablicę zamiast stringa. Zamiast wywalać cały rój,
 // sprowadzamy wartość do czytelnego tekstu.
@@ -66,9 +60,7 @@ export async function runSwarmOrchestration() {
       type: 'thought'
     });
     
-    await delay(500);
     await checkPause();
-    
     store.updateAgent('architect', { status: 'working' });
     
     const architectResult = await callLLM({
@@ -103,18 +95,14 @@ export async function runSwarmOrchestration() {
     });
     store.updateTask('task_analysis', { status: 'completed' });
     
-    // Transmit data to Coder
+    // Transmit data to Coder — krawędź świeci, dopóki Coder realnie pracuje.
     store.updateConnection('architect', 'coder', { isActive: true, status: 'transmitting' });
     store.addLog({
       agentName: 'System',
       message: 'Przesyłanie blueprintu architektonicznego do ValkyrieCoder...',
       type: 'system'
     });
-    
-    await delay(400);
-    await checkPause();
-    store.updateConnection('architect', 'coder', { isActive: false, status: 'idle' });
-    
+
     // -------------------------------------------------------------
     // ITERATIVE LOOP: CODER -> TESTER -> REVIEWER -> CODER
     // -------------------------------------------------------------
@@ -141,9 +129,7 @@ export async function runSwarmOrchestration() {
         type: 'thought'
       });
       
-      await delay(500);
       await checkPause();
-
       store.updateAgent('coder', { status: 'working' });
       
       const coderResult = await callLLM({
@@ -157,7 +143,10 @@ export async function runSwarmOrchestration() {
       });
       
       await checkPause();
-      
+      // Coder skończył — gaśnie krawędź, którą przyszły dane (architekt lub reviewer).
+      store.updateConnection('architect', 'coder', { isActive: false, status: 'idle' });
+      store.updateConnection('reviewer', 'coder', { isActive: false, status: 'idle' });
+
       const coderExplanation = asText(coderResult?.explanation);
       refactoredCode = asText(coderResult?.code);
       if (!refactoredCode) {
@@ -182,18 +171,14 @@ export async function runSwarmOrchestration() {
       });
       store.updateTask('task_coding', { status: 'completed' });
       
-      // Transmit data to Tester
+      // Transmit data to Tester — krawędź świeci przez czas realnej pracy Testera.
       store.updateConnection('coder', 'tester', { isActive: true, status: 'transmitting' });
       store.addLog({
         agentName: 'System',
         message: 'Przesyłanie kodu do TracerTester...',
         type: 'system'
       });
-      
-      await delay(400);
-      await checkPause();
-      store.updateConnection('coder', 'tester', { isActive: false, status: 'idle' });
-      
+
       // -------------------------------------------------------------
       // TASK 3: TESTER (Unit Testing)
       // -------------------------------------------------------------
@@ -207,7 +192,6 @@ export async function runSwarmOrchestration() {
         type: 'thought'
       });
 
-      await delay(500);
       await checkPause();
       store.updateAgent('tester', { status: 'working' });
 
@@ -234,6 +218,7 @@ export async function runSwarmOrchestration() {
       store.updateAgent('tester', { status: 'working', currentTask: 'Uruchamiam testy w izolowanym workerze...' });
       const testRun = await runTests(refactoredCode, unitTests);
       await checkPause();
+      store.updateConnection('coder', 'tester', { isActive: false, status: 'idle' });
 
       const testsPassed = testRun.success;
       testResults = testRun.error
@@ -258,18 +243,14 @@ export async function runSwarmOrchestration() {
       });
       store.updateTask('task_testing', { status: testsPassed ? 'completed' : 'failed' });
       
-      // Transmit data to Reviewer
+      // Transmit data to Reviewer — krawędź świeci przez czas realnej pracy Reviewera.
       store.updateConnection('tester', 'reviewer', { isActive: true, status: 'transmitting' });
       store.addLog({
         agentName: 'System',
         message: 'Przesyłanie kodu i raportu z testów do SpecterReviewer...',
         type: 'system'
       });
-      
-      await delay(400);
-      await checkPause();
-      store.updateConnection('tester', 'reviewer', { isActive: false, status: 'idle' });
-      
+
       // -------------------------------------------------------------
       // TASK 4: REVIEWER (Code Review and Approval)
       // -------------------------------------------------------------
@@ -283,7 +264,6 @@ export async function runSwarmOrchestration() {
         type: 'thought'
       });
       
-      await delay(500);
       await checkPause();
       store.updateAgent('reviewer', { status: 'working' });
       
@@ -296,7 +276,8 @@ export async function runSwarmOrchestration() {
       });
       
       await checkPause();
-      
+      store.updateConnection('tester', 'reviewer', { isActive: false, status: 'idle' });
+
       if (reviewerResult?.approved === undefined) {
         throw new Error('Reviewer zwrócił niekompletną odpowiedź (brak pola approved).');
       }
@@ -345,23 +326,19 @@ export async function runSwarmOrchestration() {
           throw new Error('Przekroczono maksymalną liczbę iteracji przeglądu kodu. Rój nie zdołał wypracować akceptowalnego rozwiązania.');
         }
         
-        // Setup loopback transmit connection (Reviewer -> Coder)
+        // Setup loopback transmit connection (Reviewer -> Coder) — gaśnie, gdy Coder skończy poprawki.
         store.updateConnection('reviewer', 'coder', { isActive: true, status: 'transmitting' });
         store.addLog({
           agentName: 'System',
           message: `Odrzucono! Przesyłanie uwag krytycznych z powrotem do ValkyrieCoder (Iteracja ${currentIteration}/${maxIterations})...`,
           type: 'system'
         });
-        
+
         // Reset tasks state for loopback
         store.updateTask('task_coding', { status: 'pending' });
         store.updateTask('task_testing', { status: 'pending' });
         store.updateTask('task_review', { status: 'pending' });
-        
-        await delay(400);
-        await checkPause();
-        store.updateConnection('reviewer', 'coder', { isActive: false, status: 'idle' });
-        
+
         currentIteration++;
       }
     }

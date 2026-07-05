@@ -49,7 +49,6 @@ export interface SwarmSettings {
   anthropicKey: string;
   openrouterKey: string;
   preferProvider: 'gemini' | 'openai' | 'anthropic' | 'openrouter';
-  speed: number;
 }
 
 export interface SwarmStoreState {
@@ -72,7 +71,6 @@ export interface SwarmStoreState {
   startSwarm: (goal: string, inputCode: string) => void;
   stopSwarm: () => void;
   togglePause: () => void;
-  setSpeed: (speed: number) => void;
   selectAgent: (id: AgentId | null) => void;
   
   // Internal Mutators

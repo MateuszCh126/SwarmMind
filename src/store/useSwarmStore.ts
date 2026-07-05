@@ -6,8 +6,7 @@ const defaultSettings: SwarmSettings = {
   openaiKey: localStorage.getItem('swarm_openaiKey') || '',
   anthropicKey: localStorage.getItem('swarm_anthropicKey') || '',
   openrouterKey: localStorage.getItem('swarm_openrouterKey') || '',
-  preferProvider: (localStorage.getItem('swarm_preferProvider') as 'gemini' | 'openai' | 'anthropic' | 'openrouter') || 'gemini',
-  speed: 1
+  preferProvider: (localStorage.getItem('swarm_preferProvider') as 'gemini' | 'openai' | 'anthropic' | 'openrouter') || 'gemini'
 };
 
 const initialAgents: Record<AgentId, Agent> = {
@@ -179,11 +178,6 @@ export const useSwarmStore = create<SwarmStoreState>((set, get) => ({
     });
   },
 
-  setSpeed: (speed) => {
-    set((state) => ({
-      settings: { ...state.settings, speed }
-    }));
-  },
 
   selectAgent: (id) => {
     set({ activeAgentId: id });

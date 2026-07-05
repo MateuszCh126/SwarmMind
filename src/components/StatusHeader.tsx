@@ -11,8 +11,7 @@ export const StatusHeader: React.FC<StatusHeaderProps> = ({ onOpenSettings }) =>
   const isPaused = useSwarmStore((state) => state.isPaused);
   const logs = useSwarmStore((state) => state.logs);
   const settings = useSwarmStore((state) => state.settings);
-  const setSpeed = useSwarmStore((state) => state.setSpeed);
-  
+
   // Calculate status
   let statusText = 'Bezczynny';
   let statusClass = 'idle';
@@ -68,21 +67,6 @@ export const StatusHeader: React.FC<StatusHeaderProps> = ({ onOpenSettings }) =>
         <div className="header-kpi">
           <span className="kpi-label">Logi:</span>
           <span className="kpi-value">{logs.length}</span>
-        </div>
-
-        <div className="speed-control">
-          <span className="kpi-label">Prędkość:</span>
-          <div className="speed-buttons">
-            {[1, 2, 4].map((s) => (
-              <button
-                key={s}
-                className={`speed-btn ${settings.speed === s ? 'active' : ''}`}
-                onClick={() => setSpeed(s)}
-              >
-                {s}x
-              </button>
-            ))}
-          </div>
         </div>
 
         <button className="settings-trigger" onClick={onOpenSettings} title="Ustawienia API">
