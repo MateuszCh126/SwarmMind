@@ -11,8 +11,13 @@ export const AgentInspector: React.FC = () => {
   const preferProvider = useSwarmStore((state) => state.settings.preferProvider);
   const inputCode = useSwarmStore((state) => state.inputCode);
 
+  const setAgentPrompt = useSwarmStore((state) => state.setAgentPrompt);
+  const resetAgentPrompt = useSwarmStore((state) => state.resetAgentPrompt);
+  const isRunning = useSwarmStore((state) => state.isRunning);
+
   const [activeTab, setActiveTab] = useState<'content' | 'config' | 'prompt' | 'diff'>('content');
   const [copied, setCopied] = useState(false);
+  const [promptDraft, setPromptDraft] = useState('');
 
   // Po przełączeniu agenta wróć do głównej zakładki (unika pustej zakładki Diff
   // przy agentach innych niż Coder).
@@ -20,6 +25,11 @@ export const AgentInspector: React.FC = () => {
     setActiveTab('content');
     setCopied(false);
   }, [activeAgentId]);
+
+  // Synchronizuj szkic promptu z aktualnym promptem agenta (także po zapisie/przywróceniu).
+  useEffect(() => {
+    setPromptDraft(agent?.systemPrompt ?? '');
+  }, [activeAgentId, agent?.systemPrompt]);
 
   const showDiff = agent?.id === 'coder' && !!inputCode && !!agent?.codeContent;
 
@@ -177,10 +187,35 @@ export const AgentInspector: React.FC = () => {
 
         {activeTab === 'prompt' && (
           <div className="tab-content prompt-view">
-            <label className="prompt-label">SYSTEM INSTRUCTIONS</label>
-            <div className="prompt-display">
-              {agent.systemPrompt}
+            <label className="prompt-label">SYSTEM INSTRUCTIONS (edytowalne)</label>
+            <textarea
+              className="prompt-editor"
+              value={promptDraft}
+              onChange={(e) => setPromptDraft(e.target.value)}
+              disabled={isRunning}
+              spellCheck={false}
+            />
+            <div className="prompt-actions">
+              <button
+                type="button"
+                className="prompt-save"
+                disabled={isRunning || promptDraft.trim() === '' || promptDraft === agent.systemPrompt}
+                onClick={() => setAgentPrompt(agent.id, promptDraft)}
+              >
+                Zapisz prompt
+              </button>
+              <button
+                type="button"
+                className="prompt-reset"
+                disabled={isRunning}
+                onClick={() => resetAgentPrompt(agent.id)}
+              >
+                Przywróć domyślny
+              </button>
             </div>
+            <span className="prompt-hint">
+              {isRunning ? 'Zatrzymaj rój, aby edytować prompt.' : 'Zmiany są trwałe (localStorage) i wpływają na kolejny przebieg.'}
+            </span>
           </div>
         )}
       </div>

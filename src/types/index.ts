@@ -72,6 +72,8 @@ export interface SwarmStoreState {
   stopSwarm: () => void;
   togglePause: () => void;
   selectAgent: (id: AgentId | null) => void;
+  setAgentPrompt: (id: AgentId, prompt: string) => void;
+  resetAgentPrompt: (id: AgentId) => void;
   
   // Internal Mutators
   addLog: (log: Omit<LogEntry, 'id' | 'timestamp'>) => void;

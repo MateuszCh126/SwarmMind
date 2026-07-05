@@ -68,6 +68,24 @@ describe('useSwarmStore Zustand Store', () => {
     expect(useSwarmStore.getState().isPaused).toBe(false);
   });
 
+  it('setAgentPrompt utrwala prompt i przeżywa resetSwarm; resetAgentPrompt przywraca domyślny', () => {
+    const store = useSwarmStore.getState();
+    const original = store.agents.coder.systemPrompt;
+
+    store.setAgentPrompt('coder', 'WŁASNY PROMPT');
+    expect(useSwarmStore.getState().agents.coder.systemPrompt).toBe('WŁASNY PROMPT');
+
+    // przeżywa reset (bo withCustomPrompts nakłada z localStorage)
+    store.resetSwarm();
+    expect(useSwarmStore.getState().agents.coder.systemPrompt).toBe('WŁASNY PROMPT');
+
+    // przywrócenie domyślnego czyści konfigurację
+    store.resetAgentPrompt('coder');
+    expect(useSwarmStore.getState().agents.coder.systemPrompt).toBe(original);
+    store.resetSwarm();
+    expect(useSwarmStore.getState().agents.coder.systemPrompt).toBe(original);
+  });
+
   it('should reset the swarm to initial values', () => {
     const store = useSwarmStore.getState();
     store.startSwarm('Do X', 'let y = 1;');

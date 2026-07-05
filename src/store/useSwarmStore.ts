@@ -1,5 +1,19 @@
 import { create } from 'zustand';
 import type { SwarmStoreState, AgentId, Agent, Connection, LogEntry, SwarmTask, SwarmSettings, LogType } from '../types';
+import { loadPrompts, savePrompt, clearPrompt } from '../utils/promptStore';
+
+// Nakłada zapisane własne system prompty na świeżą kopię agentów — dzięki temu
+// edycje promptów przeżywają reset i start nowej sesji.
+function withCustomPrompts(agents: Record<AgentId, Agent>): Record<AgentId, Agent> {
+  const custom = loadPrompts();
+  (Object.keys(custom) as AgentId[]).forEach((id) => {
+    const prompt = custom[id];
+    if (agents[id] && typeof prompt === 'string' && prompt.trim()) {
+      agents[id] = { ...agents[id], systemPrompt: prompt };
+    }
+  });
+  return agents;
+}
 
 const defaultSettings: SwarmSettings = {
   geminiKey: localStorage.getItem('swarm_geminiKey') || '',
@@ -71,7 +85,7 @@ const initialTasks: SwarmTask[] = [
 ];
 
 export const useSwarmStore = create<SwarmStoreState>((set, get) => ({
-  agents: structuredClone(initialAgents),
+  agents: withCustomPrompts(structuredClone(initialAgents)),
   connections: structuredClone(initialConnections),
   logs: [],
   tasks: structuredClone(initialTasks),
@@ -101,7 +115,7 @@ export const useSwarmStore = create<SwarmStoreState>((set, get) => ({
 
   resetSwarm: () => {
     set({
-      agents: JSON.parse(JSON.stringify(initialAgents)),
+      agents: withCustomPrompts(JSON.parse(JSON.stringify(initialAgents))),
       connections: JSON.parse(JSON.stringify(initialConnections)),
       logs: [
         {
@@ -131,7 +145,7 @@ export const useSwarmStore = create<SwarmStoreState>((set, get) => ({
     };
 
     set({
-      agents: JSON.parse(JSON.stringify(initialAgents)),
+      agents: withCustomPrompts(JSON.parse(JSON.stringify(initialAgents))),
       connections: JSON.parse(JSON.stringify(initialConnections)),
       logs: [systemLog],
       tasks: JSON.parse(JSON.stringify(initialTasks)),
@@ -181,6 +195,20 @@ export const useSwarmStore = create<SwarmStoreState>((set, get) => ({
 
   selectAgent: (id) => {
     set({ activeAgentId: id });
+  },
+
+  setAgentPrompt: (id, prompt) => {
+    savePrompt(id, prompt);
+    set((state) => ({
+      agents: { ...state.agents, [id]: { ...state.agents[id], systemPrompt: prompt } }
+    }));
+  },
+
+  resetAgentPrompt: (id) => {
+    clearPrompt(id);
+    set((state) => ({
+      agents: { ...state.agents, [id]: { ...state.agents[id], systemPrompt: initialAgents[id].systemPrompt } }
+    }));
   },
 
   addLog: (log) => {
