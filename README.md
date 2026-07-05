@@ -1,0 +1,96 @@
+# SwarmMind – Visual Multi-Agent Swarm Orchestrator
+
+SwarmMind is a premium, production-grade visual dashboard designed to orchestrate and monitor a collaborative swarm of AI agents (Architect, Coder, Tester, Reviewer) working together to solve software refactoring goals. 
+
+Built in **React + TypeScript + Vite** with a custom **Vanilla CSS** design system, it operates entirely on the client side, interacting directly with real LLM APIs (Gemini, OpenAI, Anthropic) using user-supplied API keys.
+
+---
+
+## 🛠️ Key Technical Features & Architectural Decisions
+
+### 1. High-Frequency State Isolation (Zustand vs. Context API)
+*   **The Challenge:** During swarm execution, logs stream in rapidly and agent statuses update multiple times per second. Using React's native Context API would force the entire React virtual DOM (including the large SVG network graph and control panels) to re-render, resulting in severe lagging.
+*   **The Solution:** We implemented **Zustand**. Zustand allows components to subscribe to granular slices of state. For instance, the `TerminalFeed` component only re-renders when `state.logs` changes, while the `AgentGraph` remains unaffected unless an agent status or node coordinate actually updates.
+
+### 2. GPU-Accelerated 60 FPS Rendering (CSS & SVG Tuning)
+To deliver a premium, fluid desktop application experience inspired by Apple design, we tuned the rendering pipeline:
+*   **Reflow Mitigation:** Agent nodes are positioned absolutely using percentages/pixels. We trigger hardware acceleration by using `transform: translate3d(0, 0, 0)` and `will-change: transform` to prevent browser layout repaints.
+*   **Intelligent Blur:** Heavy filters like `backdrop-filter: blur(20px)` are applied only to static backdrop overlays or non-scrolling layers. They are excluded from scrolling panels (like the terminal) or moving elements to avoid CPU-bound rendering bottlenecks.
+*   **Single-Canvas SVG:** All communication paths are drawn inside a single SVG container positioned beneath the nodes, utilizing `stroke-dasharray` and `stroke-dashoffset` keyframes to animate data packet transmission smoothly.
+
+### 3. Real AI Multi-Agent Loop (No Mocks)
+Instead of hardcoding a simulated timeline, the swarm runs real API requests:
+*   **Unified Client-Side Connectors:** Directly queries Google Gemini (`gemini-2.5-flash`), OpenAI (`gpt-4o-mini`), or Anthropic Claude (using direct browser access headers).
+*   **localStorage Security Trade-offs:** API keys are stored client-side in the browser's `localStorage` for user convenience. While this is acceptable for a frontend CV/portfolio showcase, storing secrets in `localStorage` exposes them to XSS attacks in production. For a commercial project, these credentials should be stored in a secure backend session or a proxy server. Keys are *never* sent to any third-party server besides the official AI provider endpoints.
+*   **Recursive Feedback Loop:** The review cycle is fully automated. If the **SpecterReviewer** rejects the code produced by **ValkyrieCoder** due to test failures or design issues, the state machine automatically routes the critique back to the Coder. This cycle loops recursively up to a maximum of 3 times before declaring success or failure.
+
+---
+
+## 📂 Project Structure
+
+```
+src/
+├── main.tsx                # Application Entry point
+├── App.tsx                 # Core layout structure (Grid)
+├── App.css                 # Layout styles
+├── index.css               # Design system variables, resets, & keyframes (Apple Dark Theme)
+├── types/
+│   └── index.ts            # Strict TypeScript interfaces
+├── store/
+│   └── useSwarmStore.ts    # Zustand state store & actions
+├── services/
+│   └── llmService.ts       # Unified fetch wrapper for Gemini, OpenAI, Claude
+├── utils/
+│   └── scenarioRunner.ts   # Swarm orchestration loop (State Machine)
+├── components/
+│   ├── StatusHeader.tsx    # KPIs (logs count, AI engine, play status)
+│   ├── Sidebar.tsx         # Inputs (refactoring target), controls, task checklist
+│   ├── AgentGraph.tsx      # SVG bezier connections & glowing node widgets
+│   ├── TerminalFeed.tsx    # Low-overhead log scroller & expandable code logs
+│   ├── AgentInspector.tsx  # Tabbed inspector (raw prompt, output files, test reports)
+│   └── SettingsModal.tsx   # Secured API credentials drawer
+└── __tests__/
+    ├── useSwarmStore.test.ts  # Zustand state transition tests
+    └── llmService.test.ts     # JSON Markdown parsing test suites
+```
+
+---
+
+## 🧪 Testing Suite
+
+We use **Vitest** for running lightweight and lightning-fast unit tests. Our tests cover:
+1.  **Zustand Store Actions:** Verification of `startSwarm`, `addLog`, `updateAgent`, `togglePause`, and `resetSwarm` state mutations.
+2.  **LLM Service Parsing:** Validating that markdown code fences (e.g. ```json ... ```) are correctly stripped from AI outputs to prevent JSON parser failures.
+
+To run the test suite:
+```bash
+npm run test
+```
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+*   Node.js (v18.0.0 or higher recommended)
+*   npm (v9.0.0 or higher)
+
+### Setup
+1.  Install dependencies:
+    ```bash
+    npm install
+    ```
+2.  Start the development server:
+    ```bash
+    npm run dev
+    ```
+3.  Open `http://localhost:5173` in your browser.
+4.  Click **Ustawienia** in the top right, choose your provider, enter your API key, and click **Zapisz**.
+5.  Input a refactoring target (or use the pre-loaded recursive Fibonacci code) and click **Uruchom Swarm**!
+
+### Production Build
+To build the project for production:
+```bash
+npm run build
+```
+The compiled, minified bundle will be output to the `/dist` directory.

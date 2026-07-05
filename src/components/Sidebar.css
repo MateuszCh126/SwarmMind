@@ -1,0 +1,222 @@
+.sidebar {
+  width: var(--sidebar-width);
+  height: 100%;
+  border-right: 1px solid var(--border-color);
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  gap: 16px;
+  overflow-y: auto;
+  background-color: var(--bg-secondary);
+}
+
+.sidebar-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sidebar-section h3 {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sidebar-textarea {
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  padding: 10px;
+  color: var(--text-primary);
+  font-size: 13px;
+  resize: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%;
+}
+
+.sidebar-textarea:focus {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 2px rgba(47, 128, 237, 0.15);
+}
+
+.goal-input {
+  height: 80px;
+}
+
+.code-section {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.code-input {
+  font-family: Menlo, Monaco, "Courier New", monospace;
+  font-size: 11px;
+  flex-grow: 1;
+  min-height: 180px;
+  line-height: 1.4;
+}
+
+.error-banner {
+  background-color: rgba(255, 69, 58, 0.08);
+  border: 1px solid rgba(255, 69, 58, 0.2);
+  color: #ff453a;
+  padding: 8px 12px;
+  border-radius: var(--border-radius-sm);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+
+.control-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.btn-action {
+  padding: 10px 14px;
+  border-radius: var(--border-radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.start-btn {
+  background-color: var(--text-primary);
+  color: var(--bg-primary);
+  width: 100%;
+}
+
+.start-btn:hover:not(:disabled) {
+  opacity: 0.95;
+  transform: translateY(-1px);
+}
+
+.start-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.running-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.pause-btn {
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+.pause-btn:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.pause-btn.paused {
+  background-color: rgba(255, 159, 10, 0.1);
+  border-color: rgba(255, 159, 10, 0.3);
+  color: var(--accent-orange);
+}
+
+.stop-btn {
+  background-color: rgba(255, 69, 58, 0.1);
+  border: 1px solid rgba(255, 69, 58, 0.3);
+  color: var(--accent-red);
+}
+
+.stop-btn:hover {
+  background-color: rgba(255, 69, 58, 0.2);
+}
+
+.reset-btn {
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+
+.reset-btn:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+
+.reset-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.tasks-section {
+  border-top: 1px solid var(--border-color);
+  padding-top: 16px;
+  margin-top: 4px;
+}
+
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  transition: color 0.3s;
+}
+
+.task-item.active {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.task-item.completed {
+  color: var(--text-primary);
+}
+
+.task-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.task-icon.success {
+  color: var(--accent-green);
+  flex-shrink: 0;
+}
+
+.task-icon.error {
+  color: var(--accent-red);
+  flex-shrink: 0;
+}
+
+.task-dot-pending {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color-active);
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.task-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--border-color);
+  border-top: 2px solid var(--accent-blue);
+  border-radius: 50%;
+  display: inline-block;
+  animation: task-spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes task-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

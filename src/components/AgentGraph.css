@@ -1,0 +1,197 @@
+.graph-container {
+  flex-grow: 1;
+  height: 100%;
+  position: relative;
+  background-color: var(--bg-primary);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  border-right: 1px solid var(--border-color);
+}
+
+.graph-step-overlay {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background-color: rgba(18, 18, 21, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-color);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 12.5px;
+  max-width: 90%;
+  box-shadow: var(--shadow-sm);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.step-title {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.step-desc {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.canvas-wrapper {
+  width: 800px;
+  height: 560px;
+  position: relative;
+}
+
+.connections-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.connection-back {
+  stroke: rgba(255, 255, 255, 0.04);
+  stroke-width: 2px;
+}
+
+.connection-front {
+  stroke: var(--accent-blue);
+  stroke-width: 2.5px;
+}
+
+.connection-front.transmitting {
+  stroke-dasharray: 6, 6;
+  animation: dash 1s linear infinite;
+  stroke: url(#activeGrad);
+}
+
+/* Agent Nodes Layer */
+.agent-node {
+  position: absolute;
+  z-index: 2;
+  width: 200px;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 12px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: var(--shadow-md);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.2s ease,
+              box-shadow 0.2s ease;
+  will-change: transform;
+}
+
+.agent-node:hover {
+  border-color: var(--border-color-active);
+  transform: translate(-50%, -50%) scale(1.025) !important;
+}
+
+.agent-node.selected {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 16px rgba(47, 128, 237, 0.2), var(--shadow-md);
+}
+
+.node-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  padding-bottom: 6px;
+}
+
+.node-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.node-dot.idle { background-color: var(--text-muted); }
+.node-dot.thinking { 
+  background-color: var(--accent-blue);
+  box-shadow: 0 0 8px var(--accent-blue);
+}
+.node-dot.working { 
+  background-color: var(--accent-orange);
+  box-shadow: 0 0 8px var(--accent-orange);
+}
+.node-dot.success { 
+  background-color: var(--accent-green);
+  box-shadow: 0 0 8px var(--accent-green);
+}
+.node-dot.error { 
+  background-color: var(--accent-red);
+  box-shadow: 0 0 8px var(--accent-red);
+}
+
+.node-status-text {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+.node-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.node-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.node-role {
+  font-size: 10.5px;
+  color: var(--text-secondary);
+  line-height: 1.3;
+}
+
+.node-task {
+  font-size: 11px;
+  color: var(--text-muted);
+  background-color: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 4px;
+  padding: 4px 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+/* Pulsating node state-dependent animations */
+.agent-node.thinking {
+  border-color: rgba(47, 128, 237, 0.35);
+  box-shadow: 0 0 12px rgba(47, 128, 237, 0.15), var(--shadow-md);
+}
+
+.agent-node.working {
+  border-color: rgba(255, 159, 10, 0.35);
+  box-shadow: 0 0 12px rgba(255, 159, 10, 0.15), var(--shadow-md);
+}
+
+.agent-node.success {
+  border-color: rgba(48, 209, 88, 0.35);
+}
+
+.agent-node.error {
+  border-color: rgba(255, 69, 58, 0.35);
+  box-shadow: 0 0 12px rgba(255, 69, 58, 0.15), var(--shadow-md);
+}

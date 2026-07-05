@@ -1,0 +1,157 @@
+{
+  "eslint.config.js": {
+    "mtime": 1781289642.0,
+    "ast_hash": "0355276bc79439afe3c53e3a2470ca1e",
+    "semantic_hash": ""
+  },
+  "package.json": {
+    "mtime": 1781290024.0,
+    "ast_hash": "cc583e6c1141e31ab765ec19212f975e",
+    "semantic_hash": ""
+  },
+  "src/App.tsx": {
+    "mtime": 1781290090.0,
+    "ast_hash": "d0b8135be559161e8fd1829328836f4f",
+    "semantic_hash": ""
+  },
+  "src/__tests__/llmService.test.ts": {
+    "mtime": 1781292550.0,
+    "ast_hash": "4c1c76f348179420f66a1baec8171d7e",
+    "semantic_hash": ""
+  },
+  "src/__tests__/useSwarmStore.test.ts": {
+    "mtime": 1781290028.0,
+    "ast_hash": "ed5e72d939f54e1d3020cd49fb8f5eb8",
+    "semantic_hash": ""
+  },
+  "src/components/AgentGraph.tsx": {
+    "mtime": 1781290146.0,
+    "ast_hash": "5212446d21423bfbf05f0e0d0b24068f",
+    "semantic_hash": ""
+  },
+  "src/components/AgentInspector.tsx": {
+    "mtime": 1781290078.0,
+    "ast_hash": "557af220a4e831b0db59c19ef58799f6",
+    "semantic_hash": ""
+  },
+  "src/components/SettingsModal.tsx": {
+    "mtime": 1781292628.0,
+    "ast_hash": "e354ef6720dfb11643e05c8e6be02531",
+    "semantic_hash": ""
+  },
+  "src/components/Sidebar.tsx": {
+    "mtime": 1781290050.0,
+    "ast_hash": "38b7f0cc933d936156dc68e554f3096e",
+    "semantic_hash": ""
+  },
+  "src/components/StatusHeader.tsx": {
+    "mtime": 1781290042.0,
+    "ast_hash": "959ffb6587d8e37438045262c40901b8",
+    "semantic_hash": ""
+  },
+  "src/components/TerminalFeed.tsx": {
+    "mtime": 1781292620.0,
+    "ast_hash": "690c47e0f059991f0cdf0db2a6394169",
+    "semantic_hash": ""
+  },
+  "src/main.tsx": {
+    "mtime": 1781289642.0,
+    "ast_hash": "787e5a07efeb2bf6209d5937195f2f68",
+    "semantic_hash": ""
+  },
+  "src/services/llmService.ts": {
+    "mtime": 1781292538.0,
+    "ast_hash": "4d3bfb063a32545f274eb1e5d6770ecd",
+    "semantic_hash": ""
+  },
+  "src/store/useSwarmStore.ts": {
+    "mtime": 1781292612.0,
+    "ast_hash": "ec5c02e1cf4b4781d1bc7ac1a96a16b1",
+    "semantic_hash": ""
+  },
+  "src/types/index.ts": {
+    "mtime": 1781289968.0,
+    "ast_hash": "51b6f93207e0c8992000b8b567d7ef6f",
+    "semantic_hash": ""
+  },
+  "src/utils/scenarioRunner.ts": {
+    "mtime": 1781292608.0,
+    "ast_hash": "f4d15d5de20e4864027783bbb2e03687",
+    "semantic_hash": ""
+  },
+  "tsconfig.app.json": {
+    "mtime": 1781289642.0,
+    "ast_hash": "136630b5accce1ca50663df229534a26",
+    "semantic_hash": ""
+  },
+  "tsconfig.json": {
+    "mtime": 1781289642.0,
+    "ast_hash": "a3d39fa780ebff65444de257f291ce6c",
+    "semantic_hash": ""
+  },
+  "tsconfig.node.json": {
+    "mtime": 1781289642.0,
+    "ast_hash": "70bdd0a673bcfc0e828080b306e7c680",
+    "semantic_hash": ""
+  },
+  "vite.config.ts": {
+    "mtime": 1781289642.0,
+    "ast_hash": "88439104b3c207f17d33ef3160e3b080",
+    "semantic_hash": ""
+  },
+  "vitest.config.ts": {
+    "mtime": 1781290022.0,
+    "ast_hash": "f43678ae39bb30741c4c85691e2351c1",
+    "semantic_hash": ""
+  },
+  "README.md": {
+    "mtime": 1781292646.0,
+    "ast_hash": "a1a5e7672d817bdf6dd91bd06c4dad44",
+    "semantic_hash": ""
+  },
+  "index.html": {
+    "mtime": 1781290100.0,
+    "ast_hash": "fe54c59d113f2f56e8bad761de37449c",
+    "semantic_hash": ""
+  },
+  "public/favicon.svg": {
+    "mtime": 1781289642.0,
+    "ast_hash": "7e840862161341271697daa99a40d76b",
+    "semantic_hash": ""
+  },
+  "public/icons.svg": {
+    "mtime": 1781289642.0,
+    "ast_hash": "3b4fcfcf393eca4d264dca4a4663bc37",
+    "semantic_hash": ""
+  },
+  "src/assets/hero.png": {
+    "mtime": 1781289642.0,
+    "ast_hash": "aead493361b27e7510691c5d7072dfc1",
+    "semantic_hash": ""
+  },
+  "src/assets/react.svg": {
+    "mtime": 1781289642.0,
+    "ast_hash": "f0402b67b6ce880f65666bb49e841696",
+    "semantic_hash": ""
+  },
+  "src/assets/vite.svg": {
+    "mtime": 1781289642.0,
+    "ast_hash": "9960a24288958394ac50e57ff638b036",
+    "semantic_hash": ""
+  },
+  ".agents/rules/graphify.md": {
+    "mtime": 1781292506.0,
+    "ast_hash": "a0e4d192b9e2e17256124dbfc8e24e6a",
+    "semantic_hash": ""
+  },
+  ".agents/workflows/graphify.md": {
+    "mtime": 1781292506.0,
+    "ast_hash": "637776aa6f7496d069afe7520c845c8a",
+    "semantic_hash": ""
+  },
+  "AGENTS.md": {
+    "mtime": 1781290872.0,
+    "ast_hash": "752aa83aa64361ac32860f882dcff932",
+    "semantic_hash": ""
+  }
+}
