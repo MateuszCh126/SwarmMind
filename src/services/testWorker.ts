@@ -1,15 +1,25 @@
-// Web Worker: wykonuje harness w osobnym wątku, żeby pętla nieskończona w kodzie
+// Web Worker: wykonuje harness/eval w osobnym wątku, żeby pętla nieskończona w kodzie
 // użytkownika nie zamroziła UI (główny wątek robi terminate() po timeout).
-import { runHarness } from './testHarness';
-import type { HarnessResult } from './testHarness';
+import { runHarness, runExpression } from './testHarness';
 
-interface RunRequest {
+interface TestRequest {
+  mode?: 'test';
   code: string;
   testCode: string;
 }
 
-self.onmessage = (event: MessageEvent<RunRequest>) => {
-  const { code, testCode } = event.data;
-  const result: HarnessResult = runHarness(code, testCode);
+interface EvalRequest {
+  mode: 'eval';
+  code: string;
+  expr: string;
+}
+
+type WorkerRequest = TestRequest | EvalRequest;
+
+self.onmessage = (event: MessageEvent<WorkerRequest>) => {
+  const msg = event.data;
+  const result = msg.mode === 'eval'
+    ? runExpression(msg.code, msg.expr)
+    : runHarness(msg.code, (msg as TestRequest).testCode);
   (self as unknown as Worker).postMessage(result);
 };

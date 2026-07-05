@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSwarmStore } from '../store/useSwarmStore';
 import { PROVIDER_LABELS } from '../services/llmService';
 import DiffView from './DiffView';
+import Playground from './Playground';
 import './AgentInspector.css';
 
 export const AgentInspector: React.FC = () => {
@@ -15,7 +16,7 @@ export const AgentInspector: React.FC = () => {
   const resetAgentPrompt = useSwarmStore((state) => state.resetAgentPrompt);
   const isRunning = useSwarmStore((state) => state.isRunning);
 
-  const [activeTab, setActiveTab] = useState<'content' | 'config' | 'prompt' | 'diff'>('content');
+  const [activeTab, setActiveTab] = useState<'content' | 'config' | 'prompt' | 'diff' | 'run'>('content');
   const [copied, setCopied] = useState(false);
   const [promptDraft, setPromptDraft] = useState('');
 
@@ -32,6 +33,7 @@ export const AgentInspector: React.FC = () => {
   }, [activeAgentId, agent?.systemPrompt]);
 
   const showDiff = agent?.id === 'coder' && !!inputCode && !!agent?.codeContent;
+  const showPlayground = agent?.id === 'coder' && !!agent?.codeContent;
 
   if (!agent) {
     return (
@@ -102,6 +104,14 @@ export const AgentInspector: React.FC = () => {
             Diff
           </button>
         )}
+        {showPlayground && (
+          <button
+            className={`tab-btn ${activeTab === 'run' ? 'active' : ''}`}
+            onClick={() => setActiveTab('run')}
+          >
+            Uruchom
+          </button>
+        )}
       </div>
 
       <div className="inspector-body">
@@ -151,6 +161,12 @@ export const AgentInspector: React.FC = () => {
         {activeTab === 'diff' && showDiff && (
           <div className="tab-content">
             <DiffView original={inputCode} modified={agent.codeContent || ''} />
+          </div>
+        )}
+
+        {activeTab === 'run' && showPlayground && (
+          <div className="tab-content">
+            <Playground code={agent.codeContent || ''} />
           </div>
         )}
 

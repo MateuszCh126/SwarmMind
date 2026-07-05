@@ -192,3 +192,37 @@ export function runHarness(code: string, testCode: string): HarnessResult {
 function formatCase(c: TestCaseResult): string {
   return c.passed ? `PASS  ${c.name}` : `FAIL  ${c.name}\n      → ${c.error}`;
 }
+
+// Playground: wykonuje kod użytkownika + pojedyncze wyrażenie (np. "fib(10)") i zwraca
+// REALNY wynik oraz przechwycony console.*. Bez symulacji — to samo środowisko co testy.
+export interface EvalResult {
+  ok: boolean;
+  value: string;
+  logs: string;
+  error?: string;
+}
+
+export function runExpression(code: string, expr: string): EvalResult {
+  if (!expr || !expr.trim()) {
+    return { ok: false, value: '', logs: '', error: 'Podaj wyrażenie do uruchomienia (np. fib(10)).' };
+  }
+
+  const logs: string[] = [];
+  const collect = (...args: unknown[]) => logs.push(args.map(format).join(' '));
+  const sandboxConsole = { log: collect, error: collect, warn: collect, info: collect, debug: collect };
+
+  try {
+    const body = `"use strict";\n${sanitize(code)}\n;\nreturn (${expr.trim()});`;
+    // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
+    const runner = new Function('console', body);
+    const value = runner(sandboxConsole);
+    return { ok: true, value: format(value), logs: logs.join('\n') };
+  } catch (err) {
+    return {
+      ok: false,
+      value: '',
+      logs: logs.join('\n'),
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}

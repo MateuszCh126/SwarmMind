@@ -39,6 +39,9 @@ Kod pisze subagent Haiku (model `haiku`); ja projektuję, weryfikuję grep-em + 
   responsywne szerokości paneli na węższych ekranach.
 - Realne zużycie tokenów per agent: z odpowiedzi API (Gemini/OpenAI/OpenRouter/Anthropic),
   suma w nagłówku („Tokeny") + per agent w Inspectorze.
+- **Playground (od siebie):** zakładka „Uruchom" w Inspectorze Codera — wpisz wyrażenie
+  (np. `fib(10)`), a apka NAPRAWDĘ wykona je na zrefaktoryzowanym kodzie w tym samym
+  izolowanym Web Workerze (limit 5 s), pokazując realny wynik + przechwycony console.log.
 
 ## Następne (kolejność)
 9. [ ] **Ponów pojedynczy krok** agenta ręcznie po błędzie (wymaga refaktoru scenarioRunner).
