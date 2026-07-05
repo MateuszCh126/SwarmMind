@@ -1,3 +1,24 @@
+.free-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 7px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #041b0e;
+  background: #30d158;
+  border-radius: 999px;
+  vertical-align: middle;
+}
+
+.field-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.45);
+}
+
 .modal-overlay {
   position: fixed;
   top: 0;

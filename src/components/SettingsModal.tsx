@@ -14,6 +14,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   const [geminiKey, setGeminiKey] = useState(settings.geminiKey);
   const [openaiKey, setOpenaiKey] = useState(settings.openaiKey);
   const [anthropicKey, setAnthropicKey] = useState(settings.anthropicKey);
+  const [openrouterKey, setOpenrouterKey] = useState(settings.openrouterKey);
   const [preferProvider, setPreferProvider] = useState(settings.preferProvider);
 
   if (!isOpen) return null;
@@ -23,6 +24,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
       geminiKey,
       openaiKey,
       anthropicKey,
+      openrouterKey,
       preferProvider
     });
     onClose();
@@ -40,7 +42,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
           <div className="security-notice">
             <span className="notice-icon">🛡️</span>
             <span className="notice-text">
-              <strong>Bezpieczeństwo kluczy:</strong> Klucze są zapisywane lokalnie w <code>localStorage</code> Twojej przeglądarki. Nigdy nie opuszczają Twojego komputera, poza bezpośrednimi zapytaniami do serwerów API Google, OpenAI i Anthropic.
+              <strong>Bezpieczeństwo kluczy:</strong> Klucze są zapisywane lokalnie w <code>localStorage</code> Twojej przeglądarki. Nigdy nie opuszczają Twojego komputera, poza bezpośrednimi zapytaniami do serwerów API Google, OpenAI, Anthropic i OpenRouter.
             </span>
           </div>
 
@@ -61,12 +63,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               >
                 OpenAI GPT
               </button>
-              <button 
+              <button
                 type="button"
                 className={`provider-tab ${preferProvider === 'anthropic' ? 'active' : ''}`}
                 onClick={() => setPreferProvider('anthropic')}
               >
                 Anthropic Claude
+              </button>
+              <button
+                type="button"
+                className={`provider-tab ${preferProvider === 'openrouter' ? 'active' : ''}`}
+                onClick={() => setPreferProvider('openrouter')}
+              >
+                OpenRouter (Free)
               </button>
             </div>
           </div>
@@ -95,13 +104,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
           <div className="settings-section">
             <label htmlFor="anthropic-key">Anthropic Claude API Key</label>
-            <input 
+            <input
               id="anthropic-key"
-              type="password" 
+              type="password"
               placeholder="Wklej klucz API (claude-sonnet-5)..."
               value={anthropicKey}
               onChange={(e) => setAnthropicKey(e.target.value)}
             />
+          </div>
+
+          <div className="settings-section">
+            <label htmlFor="openrouter-key">OpenRouter API Key <span className="free-badge">DARMOWE</span></label>
+            <input
+              id="openrouter-key"
+              type="password"
+              placeholder="Wklej klucz z openrouter.ai/keys..."
+              value={openrouterKey}
+              onChange={(e) => setOpenrouterKey(e.target.value)}
+            />
+            <span className="field-hint">Darmowe do testów: załóż konto na openrouter.ai, wygeneruj klucz (sk-or-...). Model: deepseek-v3 :free.</span>
           </div>
         </div>
 

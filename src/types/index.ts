@@ -47,7 +47,8 @@ export interface SwarmSettings {
   geminiKey: string;
   openaiKey: string;
   anthropicKey: string;
-  preferProvider: 'gemini' | 'openai' | 'anthropic';
+  openrouterKey: string;
+  preferProvider: 'gemini' | 'openai' | 'anthropic' | 'openrouter';
   speed: number;
 }
 

@@ -5,12 +5,16 @@ export const PROVIDER_MODELS = {
   gemini: 'gemini-2.5-flash',
   openai: 'gpt-4o-mini',
   anthropic: 'claude-sonnet-5',
+  // Darmowy model OpenRouter (sufiks :free). Jeśli 404/niedostępny, podmień na inny
+  // aktualnie darmowy z https://openrouter.ai/models?max_price=0
+  openrouter: 'poolside/laguna-xs-2.1:free',
 } as const;
 
 export const PROVIDER_LABELS = {
   gemini: 'Google Gemini (gemini-2.5-flash)',
   openai: 'OpenAI (gpt-4o-mini)',
   anthropic: 'Anthropic (claude-sonnet-5)',
+  openrouter: 'OpenRouter (laguna-xs-2.1 :free)',
 } as const;
 
 interface LLMRequestParams {
@@ -49,16 +53,28 @@ export function cleanJSONString(str: string): string {
 // z rosnącym odstępem, zanim zgłosimy błąd użytkownikowi.
 const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 529]);
 
-async function fetchWithRetry(url: string, options: RequestInit, retries = 2): Promise<Response> {
+interface HttpResult {
+  ok: boolean;
+  status: number;
+  body: string;
+}
+
+// Wykonuje POST i zwraca surowe CIAŁO jako tekst. Czytanie przez .text() (zamiast
+// .json()) chroni przed kryptycznym "Unexpected end of JSON input", gdy darmowy model
+// zwróci HTTP 200 z pustym/obciętym ciałem. Ponawiamy na błędach przejściowych ORAZ
+// na pustej odpowiedzi 200 (typowe przy przeciążonych darmowych modelach).
+async function postForText(url: string, options: RequestInit, retries = 2): Promise<HttpResult> {
   let lastError: unknown;
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       const response = await fetch(url, options);
-      if (RETRYABLE_STATUS.has(response.status) && attempt < retries) {
+      const body = await response.text();
+      const emptyOk = response.ok && !body.trim();
+      if ((RETRYABLE_STATUS.has(response.status) || emptyOk) && attempt < retries) {
         await new Promise((resolve) => setTimeout(resolve, 800 * (attempt + 1)));
         continue;
       }
-      return response;
+      return { ok: response.ok, status: response.status, body };
     } catch (error) {
       lastError = error;
       if (attempt < retries) {
@@ -69,6 +85,60 @@ async function fetchWithRetry(url: string, options: RequestInit, retries = 2): P
     }
   }
   throw lastError;
+}
+
+// Parsuje kopertę JSON zwróconą przez API (nie treść LLM) z czytelnym błędem.
+function parseEnvelope(body: string, providerLabel: string): any {
+  if (!body || !body.trim()) {
+    throw new Error(`Pusta odpowiedź z API ${providerLabel} (model przeciążony — spróbuj ponownie).`);
+  }
+  try {
+    return JSON.parse(body);
+  } catch {
+    throw new Error(`API ${providerLabel} zwróciło nieprawidłową/obciętą odpowiedź.`);
+  }
+}
+
+// Pełne wywołanie agenta: żądanie + wyciągnięcie treści + parse JSON, z PONAWIANIEM
+// gdy model zwróci treść, która nie jest prawidłowym JSON-em (częste na darmowych
+// modelach). Dzięki temu jeden flaky response nie zabija całego roju — ponawiamy
+// zamiast rzucać. Błędy nie-2xx (np. 401/429 po wewnętrznych retry) rzucamy od razu.
+async function fetchAgentJson(
+  url: string,
+  options: RequestInit,
+  label: string,
+  extract: (data: any) => string | undefined,
+  parseRetries = 2
+): Promise<any> {
+  let lastReason = '';
+  for (let attempt = 0; attempt <= parseRetries; attempt++) {
+    const { ok, status, body } = await postForText(url, options);
+
+    if (!ok) {
+      if (label === 'Anthropic' && (status === 0 || body.includes('CORS'))) {
+        throw new Error('Błąd połączenia z Anthropic. Bezpośrednie zapytania z przeglądarki mogą być blokowane przez politykę CORS. Rekomendujemy użycie Gemini lub OpenRouter.');
+      }
+      throw new Error(`Błąd API ${label} (${status}): ${body}`);
+    }
+
+    const data = parseEnvelope(body, label);
+    const text = extract(data);
+
+    if (text && text.trim()) {
+      try {
+        return JSON.parse(cleanJSONString(text));
+      } catch {
+        lastReason = 'treść nie jest prawidłowym JSON';
+      }
+    } else {
+      lastReason = 'pusta treść odpowiedzi';
+    }
+
+    if (attempt < parseRetries) {
+      await new Promise((resolve) => setTimeout(resolve, 700 * (attempt + 1)));
+    }
+  }
+  throw new Error(`Odpowiedź AI (${label}) nieprawidłowa po ponowieniach: ${lastReason}.`);
 }
 
 export async function callLLM({
@@ -96,127 +166,110 @@ export async function callLLM({
       throw new Error(`Brak klucza API dla Anthropic Claude. Wprowadź klucz w ustawieniach.`);
     }
     return callAnthropic(key, systemPrompt, userPrompt);
+  } else if (provider === 'openrouter') {
+    const key = settings.openrouterKey;
+    if (!key) {
+      throw new Error(`Brak klucza API dla OpenRouter. Wprowadź klucz w ustawieniach (openrouter.ai).`);
+    }
+    return callOpenRouter(key, systemPrompt, userPrompt);
   } else {
     throw new Error(`Nieznany dostawca AI: ${provider}`);
   }
 }
 
-async function callGemini(key: string, system: string, user: string): Promise<any> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${PROVIDER_MODELS.gemini}:generateContent`;
-  
-  const response = await fetchWithRetry(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-goog-api-key': key
+function callOpenRouter(key: string, system: string, user: string): Promise<any> {
+  return fetchAgentJson(
+    'https://openrouter.ai/api/v1/chat/completions',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${key}`
+      },
+      body: JSON.stringify({
+        model: PROVIDER_MODELS.openrouter,
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: user }
+        ],
+        temperature: 0.1
+        // Darmowe modele często nie wspierają response_format json_object — nie
+        // wymuszamy go; czysty JSON zapewniają prompty + cleanJSONString + ponawianie.
+      })
     },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: user }] }],
-      systemInstruction: { parts: [{ text: system }] },
-      generationConfig: {
+    'OpenRouter',
+    (data) => data.choices?.[0]?.message?.content
+  );
+}
+
+function callGemini(key: string, system: string, user: string): Promise<any> {
+  return fetchAgentJson(
+    `https://generativelanguage.googleapis.com/v1beta/models/${PROVIDER_MODELS.gemini}:generateContent`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': key
+      },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: user }] }],
+        systemInstruction: { parts: [{ text: system }] },
+        generationConfig: {
+          temperature: 0.1,
+          responseMimeType: 'application/json'
+        }
+      })
+    },
+    'Gemini',
+    (data) => data.candidates?.[0]?.content?.parts?.[0]?.text
+  );
+}
+
+function callOpenAI(key: string, system: string, user: string): Promise<any> {
+  return fetchAgentJson(
+    'https://api.openai.com/v1/chat/completions',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${key}`
+      },
+      body: JSON.stringify({
+        model: PROVIDER_MODELS.openai,
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: user }
+        ],
         temperature: 0.1,
-        responseMimeType: 'application/json'
-      }
-    })
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Błąd API Gemini (${response.status}): ${errorText}`);
-  }
-
-  const data = await response.json();
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) {
-    throw new Error('Pusta odpowiedź z API Gemini.');
-  }
-
-  try {
-    return JSON.parse(cleanJSONString(text));
-  } catch (e) {
-    console.error('Failed to parse Gemini response as JSON:', text);
-    throw new Error('Odpowiedź AI nie jest prawidłowym formatem JSON.');
-  }
+        response_format: { type: 'json_object' }
+      })
+    },
+    'OpenAI',
+    (data) => data.choices?.[0]?.message?.content
+  );
 }
 
-async function callOpenAI(key: string, system: string, user: string): Promise<any> {
-  const url = 'https://api.openai.com/v1/chat/completions';
-  
-  const response = await fetchWithRetry(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${key}`
+function callAnthropic(key: string, system: string, user: string): Promise<any> {
+  return fetchAgentJson(
+    'https://api.anthropic.com/v1/messages',
+    {
+      method: 'POST',
+      headers: {
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: PROVIDER_MODELS.anthropic,
+        max_tokens: 4000,
+        system: system,
+        messages: [
+          { role: 'user', content: user }
+        ]
+      })
     },
-    body: JSON.stringify({
-      model: PROVIDER_MODELS.openai,
-      messages: [
-        { role: 'system', content: system },
-        { role: 'user', content: user }
-      ],
-      temperature: 0.1,
-      response_format: { type: 'json_object' }
-    })
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Błąd API OpenAI (${response.status}): ${errorText}`);
-  }
-
-  const data = await response.json();
-  const text = data.choices?.[0]?.message?.content;
-  if (!text) {
-    throw new Error('Pusta odpowiedź z API OpenAI.');
-  }
-
-  try {
-    return JSON.parse(text);
-  } catch (e) {
-    console.error('Failed to parse OpenAI response as JSON:', text);
-    throw new Error('Odpowiedź AI nie jest prawidłowym formatem JSON.');
-  }
-}
-
-async function callAnthropic(key: string, system: string, user: string): Promise<any> {
-  const url = 'https://api.anthropic.com/v1/messages';
-  
-  const response = await fetchWithRetry(url, {
-    method: 'POST',
-    headers: {
-      'x-api-key': key,
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json',
-      'anthropic-dangerous-direct-browser-access': 'true'
-    },
-    body: JSON.stringify({
-      model: PROVIDER_MODELS.anthropic,
-      max_tokens: 4000,
-      system: system,
-      messages: [
-        { role: 'user', content: user }
-      ]
-    })
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    if (response.status === 0 || errorText.includes('CORS')) {
-      throw new Error(`Błąd połączenia z Anthropic. Bezpośrednie zapytania z przeglądarki mogą być blokowane przez politykę CORS. Rekomendujemy użycie Gemini lub OpenAI.`);
-    }
-    throw new Error(`Błąd API Anthropic (${response.status}): ${errorText}`);
-  }
-
-  const data = await response.json();
-  const text = data.content?.[0]?.text;
-  if (!text) {
-    throw new Error('Pusta odpowiedź z API Anthropic.');
-  }
-
-  try {
-    return JSON.parse(cleanJSONString(text));
-  } catch (e) {
-    console.error('Failed to parse Anthropic response as JSON:', text);
-    throw new Error('Odpowiedź AI nie jest prawidłowym formatem JSON.');
-  }
+    'Anthropic',
+    (data) => data.content?.[0]?.text
+  );
 }

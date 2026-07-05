@@ -5,7 +5,8 @@ const defaultSettings: SwarmSettings = {
   geminiKey: localStorage.getItem('swarm_geminiKey') || '',
   openaiKey: localStorage.getItem('swarm_openaiKey') || '',
   anthropicKey: localStorage.getItem('swarm_anthropicKey') || '',
-  preferProvider: (localStorage.getItem('swarm_preferProvider') as 'gemini' | 'openai' | 'anthropic') || 'gemini',
+  openrouterKey: localStorage.getItem('swarm_openrouterKey') || '',
+  preferProvider: (localStorage.getItem('swarm_preferProvider') as 'gemini' | 'openai' | 'anthropic' | 'openrouter') || 'gemini',
   speed: 1
 };
 
@@ -92,6 +93,7 @@ export const useSwarmStore = create<SwarmStoreState>((set, get) => ({
       if (newSettings.geminiKey !== undefined) localStorage.setItem('swarm_geminiKey', newSettings.geminiKey);
       if (newSettings.openaiKey !== undefined) localStorage.setItem('swarm_openaiKey', newSettings.openaiKey);
       if (newSettings.anthropicKey !== undefined) localStorage.setItem('swarm_anthropicKey', newSettings.anthropicKey);
+      if (newSettings.openrouterKey !== undefined) localStorage.setItem('swarm_openrouterKey', newSettings.openrouterKey);
       if (newSettings.preferProvider !== undefined) localStorage.setItem('swarm_preferProvider', newSettings.preferProvider);
       
       return { settings };

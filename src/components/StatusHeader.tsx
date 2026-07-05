@@ -41,6 +41,7 @@ export const StatusHeader: React.FC<StatusHeaderProps> = ({ onOpenSettings }) =>
       case 'gemini': return 'Google Gemini';
       case 'openai': return 'OpenAI GPT';
       case 'anthropic': return 'Anthropic Claude';
+      case 'openrouter': return 'OpenRouter (Free)';
       default: return 'Brak';
     }
   };

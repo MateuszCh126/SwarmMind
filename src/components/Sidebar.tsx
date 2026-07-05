@@ -28,12 +28,17 @@ export const Sidebar: React.FC = () => {
     // Check if API key is entered for the chosen provider
     const settings = store.settings;
     const provider = settings.preferProvider;
-    const key = provider === 'gemini' ? settings.geminiKey : 
-                provider === 'openai' ? settings.openaiKey : 
+    const key = provider === 'gemini' ? settings.geminiKey :
+                provider === 'openai' ? settings.openaiKey :
+                provider === 'openrouter' ? settings.openrouterKey :
                 settings.anthropicKey;
 
     if (!key) {
-      setErrorMsg(`Błąd: Brak klucza API dla ${provider === 'gemini' ? 'Google Gemini' : provider === 'openai' ? 'OpenAI' : 'Anthropic'}. Skonfiguruj go w Ustawieniach w prawym górnym rogu.`);
+      const providerName = provider === 'gemini' ? 'Google Gemini'
+        : provider === 'openai' ? 'OpenAI'
+        : provider === 'openrouter' ? 'OpenRouter'
+        : 'Anthropic';
+      setErrorMsg(`Błąd: Brak klucza API dla ${providerName}. Skonfiguruj go w Ustawieniach w prawym górnym rogu.`);
       return;
     }
 

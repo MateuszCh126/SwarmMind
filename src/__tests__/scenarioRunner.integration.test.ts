@@ -11,13 +11,16 @@ interface GeminiPayload {
 }
 
 function geminiResponse(payload: GeminiPayload) {
+  // Kod czyta ciało przez .text() (parseEnvelope), więc mock musi zwrócić pełną
+  // KOPERTĘ Gemini jako tekst, nie samą treść.
+  const envelope = {
+    candidates: [{ content: { parts: [{ text: JSON.stringify(payload) }] } }],
+  };
   return {
     ok: true,
     status: 200,
-    json: async () => ({
-      candidates: [{ content: { parts: [{ text: JSON.stringify(payload) }] } }],
-    }),
-    text: async () => JSON.stringify(payload),
+    json: async () => envelope,
+    text: async () => JSON.stringify(envelope),
   } as unknown as Response;
 }
 
