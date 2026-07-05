@@ -37,6 +37,8 @@ Kod pisze subagent Haiku (model `haiku`); ja projektuję, weryfikuję grep-em + 
   callLLM/runTests) pokazany w Inspectorze (Konfiguracja → „Czas pracy").
 - Dostępność: widoczny focus klawiaturą (focus-visible), prefers-reduced-motion,
   responsywne szerokości paneli na węższych ekranach.
+- Realne zużycie tokenów per agent: z odpowiedzi API (Gemini/OpenAI/OpenRouter/Anthropic),
+  suma w nagłówku („Tokeny") + per agent w Inspectorze.
 
 ## Następne (kolejność)
 9. [ ] **Ponów pojedynczy krok** agenta ręcznie po błędzie (wymaga refaktoru scenarioRunner).

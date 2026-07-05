@@ -48,6 +48,12 @@ export async function runSwarmOrchestration() {
   let unitTests = '';
   let testResults = '';
   let reviewerFeedback = '';
+
+  // Akumulacja realnego zużycia tokenów per agent (z odpowiedzi API, sumowane po iteracjach).
+  let architectTokens = 0;
+  let coderTokens = 0;
+  let testerTokens = 0;
+  let reviewerTokens = 0;
   
   try {
     // -------------------------------------------------------------
@@ -70,6 +76,7 @@ export async function runSwarmOrchestration() {
 
     const architectResult = await callLLM({
       agentId: 'architect',
+      onUsage: (t) => { architectTokens += t; },
       agentRole: store.agents.architect.role,
       systemPrompt: store.agents.architect.systemPrompt,
       userPrompt: `Oryginalny kod:\n\`\`\`\n${inputCode}\n\`\`\`\n\nCel refaktoryzacji:\n${goal}\n\nAnalizuj kod i stwórz plan refaktoryzacji. Twoja odpowiedź MUSI być czystym JSON z polami 'explanation' i 'blueprint'.`,
@@ -90,7 +97,8 @@ export async function runSwarmOrchestration() {
       status: 'success',
       currentTask: 'Zakończono planowanie.',
       codeContent: blueprint,
-      durationMs: Date.now() - architectStart
+      durationMs: Date.now() - architectStart,
+      tokens: architectTokens
     });
     store.addLog({
       agentId: 'architect',
@@ -141,6 +149,7 @@ export async function runSwarmOrchestration() {
 
       const coderResult = await callLLM({
         agentId: 'coder',
+        onUsage: (t) => { coderTokens += t; },
         agentRole: store.agents.coder.role,
         systemPrompt: store.agents.coder.systemPrompt,
         userPrompt: `Oryginalny kod:\n\`\`\`\n${inputCode}\n\`\`\`\n\nPlan refaktoryzacji:\n${blueprint}\n\n${
@@ -167,7 +176,8 @@ export async function runSwarmOrchestration() {
         status: 'success',
         currentTask: 'Kod zaimplementowany.',
         codeContent: refactoredCode,
-        durationMs: Date.now() - coderStart
+        durationMs: Date.now() - coderStart,
+        tokens: coderTokens
       });
       
       store.addLog({
@@ -206,6 +216,7 @@ export async function runSwarmOrchestration() {
 
       const testerResult = await callLLM({
         agentId: 'tester',
+        onUsage: (t) => { testerTokens += t; },
         agentRole: store.agents.tester.role,
         systemPrompt: store.agents.tester.systemPrompt,
         userPrompt: `Zrefaktoryzowany kod:\n\`\`\`\n${refactoredCode}\n\`\`\`\n\nOryginalny kod:\n\`\`\`\n${inputCode}\n\`\`\`\n\nCel refaktoryzacji:\n${goal}\n\nWygeneruj testy jednostkowe w czystym JavaScript (styl describe/it/expect, bez importów). Twoja odpowiedź MUSI być czystym JSON z polami 'explanation' oraz 'testCode'. NIE zgaduj wyników — testy zostaną naprawdę uruchomione.`,
@@ -241,7 +252,8 @@ export async function runSwarmOrchestration() {
           : 'Wykryto niezaliczone testy lub błąd wykonania.',
         codeContent: unitTests,
         testContent: testResults,
-        durationMs: Date.now() - testerStart
+        durationMs: Date.now() - testerStart,
+        tokens: testerTokens
       });
 
       store.addLog({
@@ -280,6 +292,7 @@ export async function runSwarmOrchestration() {
 
       const reviewerResult = await callLLM({
         agentId: 'reviewer',
+        onUsage: (t) => { reviewerTokens += t; },
         agentRole: store.agents.reviewer.role,
         systemPrompt: store.agents.reviewer.systemPrompt,
         userPrompt: `Zrefaktoryzowany kod:\n\`\`\`\n${refactoredCode}\n\`\`\`\n\nTesty jednostkowe:\n\`\`\`\n${unitTests}\n\`\`\`\n\nWyniki testów:\n${testResults}\n\nOceń kod pod kątem bezpieczeństwa, wydajności i kompletności. Twoja odpowiedź MUSI być czystym JSON z polami 'explanation', 'approved' (boolean) i 'feedback'.`,
@@ -310,7 +323,8 @@ export async function runSwarmOrchestration() {
         status: approved ? 'success' : 'error',
         currentTask: approved ? 'Kod zatwierdzony!' : 'Odrzucono - wymaga poprawek.',
         feedback: reviewerFeedback,
-        durationMs: Date.now() - reviewerStart
+        durationMs: Date.now() - reviewerStart,
+        tokens: reviewerTokens
       });
       
       store.addLog({

@@ -12,6 +12,8 @@ export const StatusHeader: React.FC<StatusHeaderProps> = ({ onOpenSettings, onOp
   const isPaused = useSwarmStore((state) => state.isPaused);
   const logs = useSwarmStore((state) => state.logs);
   const settings = useSwarmStore((state) => state.settings);
+  const agents = useSwarmStore((state) => state.agents);
+  const totalTokens = Object.values(agents).reduce((sum, a) => sum + (a.tokens || 0), 0);
 
   // Licznik czasu przebiegu — sygnalizuje, że rój naprawdę pracuje (wywołania API
   // bywają wolne), żeby czekanie nie wyglądało jak zawieszenie.
@@ -90,6 +92,13 @@ export const StatusHeader: React.FC<StatusHeaderProps> = ({ onOpenSettings, onOp
           <span className="kpi-label">Logi:</span>
           <span className="kpi-value">{logs.length}</span>
         </div>
+
+        {totalTokens > 0 && (
+          <div className="header-kpi">
+            <span className="kpi-label">Tokeny:</span>
+            <span className="kpi-value">{totalTokens.toLocaleString('pl-PL')}</span>
+          </div>
+        )}
 
         <button className="settings-trigger" onClick={onOpenHistory} title="Historia przebiegów">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

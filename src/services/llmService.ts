@@ -24,6 +24,7 @@ interface LLMRequestParams {
   systemPrompt: string;
   userPrompt: string;
   settings: SwarmSettings;
+  onUsage?: (tokens: number) => void;
 }
 
 // Helper to clean Markdown code block formatting if returned by LLM
@@ -104,11 +105,23 @@ function parseEnvelope(body: string, providerLabel: string): any {
 // gdy model zwróci treść, która nie jest prawidłowym JSON-em (częste na darmowych
 // modelach). Dzięki temu jeden flaky response nie zabija całego roju — ponawiamy
 // zamiast rzucać. Błędy nie-2xx (np. 401/429 po wewnętrznych retry) rzucamy od razu.
+// Wyciąga zużycie tokenów z koperty (różne pola per provider). 0, gdy brak danych.
+function extractTokens(data: any): number {
+  const u = data?.usageMetadata || data?.usage;
+  if (!u) return 0;
+  return Number(
+    u.totalTokenCount ??
+    u.total_tokens ??
+    ((u.input_tokens || 0) + (u.output_tokens || 0))
+  ) || 0;
+}
+
 async function fetchAgentJson(
   url: string,
   options: RequestInit,
   label: string,
   extract: (data: any) => string | undefined,
+  onUsage?: (tokens: number) => void,
   parseRetries = 2
 ): Promise<any> {
   let lastReason = '';
@@ -123,6 +136,10 @@ async function fetchAgentJson(
     }
 
     const data = parseEnvelope(body, label);
+    if (onUsage) {
+      const tokens = extractTokens(data);
+      if (tokens) onUsage(tokens);
+    }
     const text = extract(data);
 
     if (text && text.trim()) {
@@ -145,40 +162,41 @@ async function fetchAgentJson(
 export async function callLLM({
   systemPrompt,
   userPrompt,
-  settings
+  settings,
+  onUsage
 }: LLMRequestParams): Promise<any> {
   const provider = settings.preferProvider;
-  
+
   if (provider === 'gemini') {
     const key = settings.geminiKey;
     if (!key) {
       throw new Error(`Brak klucza API dla Google Gemini. Wprowadź klucz w ustawieniach.`);
     }
-    return callGemini(key, systemPrompt, userPrompt);
+    return callGemini(key, systemPrompt, userPrompt, onUsage);
   } else if (provider === 'openai') {
     const key = settings.openaiKey;
     if (!key) {
       throw new Error(`Brak klucza API dla OpenAI. Wprowadź klucz w ustawieniach.`);
     }
-    return callOpenAI(key, systemPrompt, userPrompt);
+    return callOpenAI(key, systemPrompt, userPrompt, onUsage);
   } else if (provider === 'anthropic') {
     const key = settings.anthropicKey;
     if (!key) {
       throw new Error(`Brak klucza API dla Anthropic Claude. Wprowadź klucz w ustawieniach.`);
     }
-    return callAnthropic(key, systemPrompt, userPrompt);
+    return callAnthropic(key, systemPrompt, userPrompt, onUsage);
   } else if (provider === 'openrouter') {
     const key = settings.openrouterKey;
     if (!key) {
       throw new Error(`Brak klucza API dla OpenRouter. Wprowadź klucz w ustawieniach (openrouter.ai).`);
     }
-    return callOpenRouter(key, systemPrompt, userPrompt);
+    return callOpenRouter(key, systemPrompt, userPrompt, onUsage);
   } else {
     throw new Error(`Nieznany dostawca AI: ${provider}`);
   }
 }
 
-function callOpenRouter(key: string, system: string, user: string): Promise<any> {
+function callOpenRouter(key: string, system: string, user: string, onUsage?: (tokens: number) => void): Promise<any> {
   return fetchAgentJson(
     'https://openrouter.ai/api/v1/chat/completions',
     {
@@ -199,11 +217,12 @@ function callOpenRouter(key: string, system: string, user: string): Promise<any>
       })
     },
     'OpenRouter',
-    (data) => data.choices?.[0]?.message?.content
+    (data) => data.choices?.[0]?.message?.content,
+    onUsage
   );
 }
 
-function callGemini(key: string, system: string, user: string): Promise<any> {
+function callGemini(key: string, system: string, user: string, onUsage?: (tokens: number) => void): Promise<any> {
   return fetchAgentJson(
     `https://generativelanguage.googleapis.com/v1beta/models/${PROVIDER_MODELS.gemini}:generateContent`,
     {
@@ -222,11 +241,12 @@ function callGemini(key: string, system: string, user: string): Promise<any> {
       })
     },
     'Gemini',
-    (data) => data.candidates?.[0]?.content?.parts?.[0]?.text
+    (data) => data.candidates?.[0]?.content?.parts?.[0]?.text,
+    onUsage
   );
 }
 
-function callOpenAI(key: string, system: string, user: string): Promise<any> {
+function callOpenAI(key: string, system: string, user: string, onUsage?: (tokens: number) => void): Promise<any> {
   return fetchAgentJson(
     'https://api.openai.com/v1/chat/completions',
     {
@@ -246,11 +266,12 @@ function callOpenAI(key: string, system: string, user: string): Promise<any> {
       })
     },
     'OpenAI',
-    (data) => data.choices?.[0]?.message?.content
+    (data) => data.choices?.[0]?.message?.content,
+    onUsage
   );
 }
 
-function callAnthropic(key: string, system: string, user: string): Promise<any> {
+function callAnthropic(key: string, system: string, user: string, onUsage?: (tokens: number) => void): Promise<any> {
   return fetchAgentJson(
     'https://api.anthropic.com/v1/messages',
     {
@@ -271,7 +292,8 @@ function callAnthropic(key: string, system: string, user: string): Promise<any> 
       })
     },
     'Anthropic',
-    (data) => data.content?.[0]?.text
+    (data) => data.content?.[0]?.text,
+    onUsage
   );
 }
 

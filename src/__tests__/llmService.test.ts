@@ -119,6 +119,23 @@ describe('callLLM — odporność na przejściowe błędy sieci', () => {
     ).rejects.toThrow(/nieprawidłowa po ponowieniach/);
   });
 
+  it('callLLM raportuje zużycie tokenów przez onUsage', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok: true, status: 200,
+      text: async () => JSON.stringify({
+        usage: { total_tokens: 123 },
+        choices: [{ message: { content: '{"explanation":"x","blueprint":"y"}' } }],
+      }),
+    } as unknown as Response)));
+
+    let reported = 0;
+    await callLLM({
+      agentId: 'architect', agentRole: '', systemPrompt: 's', userPrompt: 'u',
+      settings: baseSettings, onUsage: (t) => { reported += t; },
+    });
+    expect(reported).toBe(123);
+  });
+
   it('pingProvider: brak klucza -> ok:false', async () => {
     const res = await pingProvider({ ...baseSettings, openrouterKey: '' });
     expect(res.ok).toBe(false);

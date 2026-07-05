@@ -178,6 +178,12 @@ export const AgentInspector: React.FC = () => {
                 <span className="info-value">{(agent.durationMs / 1000).toFixed(1)} s</span>
               </div>
             )}
+            {typeof agent.tokens === 'number' && agent.tokens > 0 && (
+              <div className="info-group">
+                <span className="info-label">Zużyte tokeny</span>
+                <span className="info-value">{agent.tokens.toLocaleString('pl-PL')}</span>
+              </div>
+            )}
             {agent.status !== 'idle' && (
               <div className="info-group">
                 <span className="info-label">Bieżące Zadanie</span>

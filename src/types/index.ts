@@ -14,6 +14,7 @@ export interface Agent {
   testContent?: string;
   feedback?: string;
   durationMs?: number;
+  tokens?: number;
   x: number;
   y: number;
 }
