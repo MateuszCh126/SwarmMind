@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useSwarmStore } from '../store/useSwarmStore';
+import { PROVIDER_LABELS } from '../services/llmService';
 import './AgentInspector.css';
 
 export const AgentInspector: React.FC = () => {
   const activeAgentId = useSwarmStore((state) => state.activeAgentId);
   const selectAgent = useSwarmStore((state) => state.selectAgent);
   const agent = useSwarmStore((state) => (activeAgentId ? state.agents[activeAgentId] : null));
+  const preferProvider = useSwarmStore((state) => state.settings.preferProvider);
 
   const [activeTab, setActiveTab] = useState<'content' | 'config' | 'prompt'>('content');
   const [copied, setCopied] = useState(false);
@@ -129,7 +131,7 @@ export const AgentInspector: React.FC = () => {
             </div>
             <div className="info-group">
               <span className="info-label">Model Fundacyjny</span>
-              <span className="info-value">{agent.model}</span>
+              <span className="info-value">{PROVIDER_LABELS[preferProvider]}</span>
             </div>
             <div className="info-group">
               <span className="info-label">Aktualny Status</span>

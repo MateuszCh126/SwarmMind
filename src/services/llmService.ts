@@ -1,5 +1,18 @@
 import type { AgentId, SwarmSettings } from '../types';
 
+// Centralne ID modeli per provider — jedno źródło prawdy dla wywołań API i etykiet w UI.
+export const PROVIDER_MODELS = {
+  gemini: 'gemini-2.5-flash',
+  openai: 'gpt-4o-mini',
+  anthropic: 'claude-sonnet-5',
+} as const;
+
+export const PROVIDER_LABELS = {
+  gemini: 'Google Gemini (gemini-2.5-flash)',
+  openai: 'OpenAI (gpt-4o-mini)',
+  anthropic: 'Anthropic (claude-sonnet-5)',
+} as const;
+
 interface LLMRequestParams {
   agentId: AgentId;
   agentRole: string;
@@ -63,7 +76,7 @@ export async function callLLM({
 }
 
 async function callGemini(key: string, system: string, user: string): Promise<any> {
-  const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${PROVIDER_MODELS.gemini}:generateContent`;
   
   const response = await fetch(url, {
     method: 'POST',
@@ -110,7 +123,7 @@ async function callOpenAI(key: string, system: string, user: string): Promise<an
       'Authorization': `Bearer ${key}`
     },
     body: JSON.stringify({
-      model: 'gpt-4o-mini',
+      model: PROVIDER_MODELS.openai,
       messages: [
         { role: 'system', content: system },
         { role: 'user', content: user }
@@ -151,9 +164,8 @@ async function callAnthropic(key: string, system: string, user: string): Promise
       'anthropic-dangerous-direct-browser-access': 'true'
     },
     body: JSON.stringify({
-      model: 'claude-3-5-sonnet-latest',
+      model: PROVIDER_MODELS.anthropic,
       max_tokens: 4000,
-      temperature: 0.1,
       system: system,
       messages: [
         { role: 'user', content: user }

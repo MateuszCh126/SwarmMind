@@ -98,7 +98,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             <input 
               id="anthropic-key"
               type="password" 
-              placeholder="Wklej klucz API (claude-3-5-sonnet-latest)..."
+              placeholder="Wklej klucz API (claude-sonnet-5)..."
               value={anthropicKey}
               onChange={(e) => setAnthropicKey(e.target.value)}
             />
