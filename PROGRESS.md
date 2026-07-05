@@ -35,11 +35,12 @@ Kod pisze subagent Haiku (model `haiku`); ja projektuję, weryfikuję grep-em + 
 
 - Metryki czasu per agent: realny czas pracy każdego agenta (Date.now wokół
   callLLM/runTests) pokazany w Inspectorze (Konfiguracja → „Czas pracy").
-
-## Następne (kolejność)
 - Dostępność: widoczny focus klawiaturą (focus-visible), prefers-reduced-motion,
   responsywne szerokości paneli na węższych ekranach.
-9. [ ] **Ponów pojedynczy krok** agenta ręcznie po błędzie.
+
+## Następne (kolejność)
+9. [ ] **Ponów pojedynczy krok** agenta ręcznie po błędzie (wymaga refaktoru scenarioRunner).
+10. [ ] Live E2E z prawdziwym kluczem po stronie użytkownika (rano).
 
 ## Uwaga o limitach
 Cron co 30 min (7,37 * * * *) wznawia pracę, jeśli wywali limit API. Praca sesyjna
