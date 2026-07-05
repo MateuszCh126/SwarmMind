@@ -13,6 +13,7 @@ export interface Agent {
   codeContent?: string;
   testContent?: string;
   feedback?: string;
+  durationMs?: number;
   x: number;
   y: number;
 }

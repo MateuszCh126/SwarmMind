@@ -33,8 +33,10 @@ Kod pisze subagent Haiku (model `haiku`); ja projektuję, weryfikuję grep-em + 
 - Edytowalne, TRWAŁE system prompty agentów: w Inspectorze (zakładka System Prompt)
   edycja + „Zapisz"/„Przywróć domyślny"; zapis w localStorage, przeżywa reset/start.
 
+- Metryki czasu per agent: realny czas pracy każdego agenta (Date.now wokół
+  callLLM/runTests) pokazany w Inspectorze (Konfiguracja → „Czas pracy").
+
 ## Następne (kolejność)
-7. [ ] **Metryki**: czas i (jeśli API zwraca) zużycie tokenów per agent.
 8. [ ] **Dostępność/responsywność**: focus, prefers-reduced-motion, mobile.
 9. [ ] **Ponów pojedynczy krok** agenta ręcznie po błędzie.
 

@@ -172,6 +172,12 @@ export const AgentInspector: React.FC = () => {
               <span className="info-label">Aktualny Status</span>
               <span className="info-value capitalize">{agent.status}</span>
             </div>
+            {typeof agent.durationMs === 'number' && (
+              <div className="info-group">
+                <span className="info-label">Czas pracy</span>
+                <span className="info-value">{(agent.durationMs / 1000).toFixed(1)} s</span>
+              </div>
+            )}
             {agent.status !== 'idle' && (
               <div className="info-group">
                 <span className="info-label">Bieżące Zadanie</span>

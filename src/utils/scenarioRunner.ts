@@ -66,7 +66,8 @@ export async function runSwarmOrchestration() {
     
     await checkPause();
     store.updateAgent('architect', { status: 'working' });
-    
+    const architectStart = Date.now();
+
     const architectResult = await callLLM({
       agentId: 'architect',
       agentRole: store.agents.architect.role,
@@ -85,10 +86,11 @@ export async function runSwarmOrchestration() {
     if (!architectExplanation) {
       throw new Error('Architect zwrócił niekompletną odpowiedź (brak pola explanation).');
     }
-    store.updateAgent('architect', { 
-      status: 'success', 
+    store.updateAgent('architect', {
+      status: 'success',
       currentTask: 'Zakończono planowanie.',
-      codeContent: blueprint 
+      codeContent: blueprint,
+      durationMs: Date.now() - architectStart
     });
     store.addLog({
       agentId: 'architect',
@@ -135,7 +137,8 @@ export async function runSwarmOrchestration() {
       
       await checkPause();
       store.updateAgent('coder', { status: 'working' });
-      
+      const coderStart = Date.now();
+
       const coderResult = await callLLM({
         agentId: 'coder',
         agentRole: store.agents.coder.role,
@@ -160,10 +163,11 @@ export async function runSwarmOrchestration() {
         throw new Error('Coder zwrócił niekompletną odpowiedź (brak pola explanation).');
       }
       
-      store.updateAgent('coder', { 
-        status: 'success', 
+      store.updateAgent('coder', {
+        status: 'success',
         currentTask: 'Kod zaimplementowany.',
-        codeContent: refactoredCode 
+        codeContent: refactoredCode,
+        durationMs: Date.now() - coderStart
       });
       
       store.addLog({
@@ -198,6 +202,7 @@ export async function runSwarmOrchestration() {
 
       await checkPause();
       store.updateAgent('tester', { status: 'working' });
+      const testerStart = Date.now();
 
       const testerResult = await callLLM({
         agentId: 'tester',
@@ -235,7 +240,8 @@ export async function runSwarmOrchestration() {
           ? `Testy zaliczone (${testRun.passed}/${testRun.passed + testRun.failed}).`
           : 'Wykryto niezaliczone testy lub błąd wykonania.',
         codeContent: unitTests,
-        testContent: testResults
+        testContent: testResults,
+        durationMs: Date.now() - testerStart
       });
 
       store.addLog({
@@ -270,7 +276,8 @@ export async function runSwarmOrchestration() {
       
       await checkPause();
       store.updateAgent('reviewer', { status: 'working' });
-      
+      const reviewerStart = Date.now();
+
       const reviewerResult = await callLLM({
         agentId: 'reviewer',
         agentRole: store.agents.reviewer.role,
@@ -302,7 +309,8 @@ export async function runSwarmOrchestration() {
       store.updateAgent('reviewer', {
         status: approved ? 'success' : 'error',
         currentTask: approved ? 'Kod zatwierdzony!' : 'Odrzucono - wymaga poprawek.',
-        feedback: reviewerFeedback
+        feedback: reviewerFeedback,
+        durationMs: Date.now() - reviewerStart
       });
       
       store.addLog({
