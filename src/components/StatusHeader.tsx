@@ -4,9 +4,10 @@ import './StatusHeader.css';
 
 interface StatusHeaderProps {
   onOpenSettings: () => void;
+  onOpenHistory: () => void;
 }
 
-export const StatusHeader: React.FC<StatusHeaderProps> = ({ onOpenSettings }) => {
+export const StatusHeader: React.FC<StatusHeaderProps> = ({ onOpenSettings, onOpenHistory }) => {
   const isRunning = useSwarmStore((state) => state.isRunning);
   const isPaused = useSwarmStore((state) => state.isPaused);
   const logs = useSwarmStore((state) => state.logs);
@@ -89,6 +90,15 @@ export const StatusHeader: React.FC<StatusHeaderProps> = ({ onOpenSettings }) =>
           <span className="kpi-label">Logi:</span>
           <span className="kpi-value">{logs.length}</span>
         </div>
+
+        <button className="settings-trigger" onClick={onOpenHistory} title="Historia przebiegów">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M3 3v5h5"/>
+            <path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/>
+            <path d="M12 7v5l4 2"/>
+          </svg>
+          Historia
+        </button>
 
         <button className="settings-trigger" onClick={onOpenSettings} title="Ustawienia API">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

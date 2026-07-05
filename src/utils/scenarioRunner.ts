@@ -2,6 +2,7 @@ import { useSwarmStore } from '../store/useSwarmStore';
 import { callLLM } from '../services/llmService';
 import { runTests } from '../services/testRunner';
 import { friendlyError } from './friendlyError';
+import { saveRun } from './runHistory';
 import type { AgentId } from '../types';
 
 // LLM-y (zwłaszcza w trybie responseMimeType: application/json) potrafią zwrócić
@@ -321,6 +322,13 @@ export async function runSwarmOrchestration() {
           message: 'Proces zakończony sukcesem. Kod został w pełni zrefaktoryzowany i zatwierdzony przez Reviewera.',
           type: 'success'
         });
+        saveRun({
+          id: `run_${Date.now()}`,
+          timestamp: new Date().toLocaleString(),
+          goal, provider: settings.preferProvider, outcome: 'success', iterations: currentIteration,
+          inputCode, blueprint, code: refactoredCode, tests: unitTests, testResults, reviewerFeedback,
+          summary: 'Zatwierdzono przez Reviewera.'
+        });
         store.setRunningState(false);
         return;
       } else {
@@ -370,6 +378,13 @@ export async function runSwarmOrchestration() {
     
     const raw = String(err?.message || err);
     const fe = friendlyError(raw);
+    saveRun({
+      id: `run_${Date.now()}`,
+      timestamp: new Date().toLocaleString(),
+      goal, provider: settings.preferProvider, outcome: 'error', iterations: currentIteration,
+      inputCode, blueprint, code: refactoredCode, tests: unitTests, testResults, reviewerFeedback,
+      summary: fe.message
+    });
     store.addLog({
       agentName: 'System',
       message: fe.hint ? `${fe.message} — ${fe.hint}` : fe.message,

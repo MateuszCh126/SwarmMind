@@ -21,8 +21,10 @@ Kod pisze subagent Haiku (model `haiku`); ja projektuję, weryfikuję grep-em + 
 
 - Eksport wyniku: przycisk „Pobierz wynik (.md)" — raport z kodem, testami, wynikiem, review.
 
+- Historia przebiegów w localStorage: modal „Historia" (do 20 wpisów), badge sukces/błąd,
+  pobieranie raportu każdego przebiegu, czyszczenie. Zapis przy sukcesie i błędzie roju.
+
 ## Następne (kolejność)
-3. [ ] **Historia przebiegów** w localStorage (lista, podgląd poprzednich wyników).
 4. [ ] **Diff**: oryginał vs zrefaktoryzowany kod (side-by-side lub podświetlenie).
 5. [ ] **Edytowalne system prompty agentów** w Inspectorze (realna konfiguracja).
 6. [ ] **„Testuj klucz"** w Ustawieniach — realny ping do API wybranego providera.
