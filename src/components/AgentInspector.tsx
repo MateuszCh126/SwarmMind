@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSwarmStore } from '../store/useSwarmStore';
 import { PROVIDER_LABELS } from '../services/llmService';
+import DiffView from './DiffView';
 import './AgentInspector.css';
 
 export const AgentInspector: React.FC = () => {
@@ -8,9 +9,19 @@ export const AgentInspector: React.FC = () => {
   const selectAgent = useSwarmStore((state) => state.selectAgent);
   const agent = useSwarmStore((state) => (activeAgentId ? state.agents[activeAgentId] : null));
   const preferProvider = useSwarmStore((state) => state.settings.preferProvider);
+  const inputCode = useSwarmStore((state) => state.inputCode);
 
-  const [activeTab, setActiveTab] = useState<'content' | 'config' | 'prompt'>('content');
+  const [activeTab, setActiveTab] = useState<'content' | 'config' | 'prompt' | 'diff'>('content');
   const [copied, setCopied] = useState(false);
+
+  // Po przełączeniu agenta wróć do głównej zakładki (unika pustej zakładki Diff
+  // przy agentach innych niż Coder).
+  useEffect(() => {
+    setActiveTab('content');
+    setCopied(false);
+  }, [activeAgentId]);
+
+  const showDiff = agent?.id === 'coder' && !!inputCode && !!agent?.codeContent;
 
   if (!agent) {
     return (
@@ -67,12 +78,20 @@ export const AgentInspector: React.FC = () => {
         >
           Konfiguracja
         </button>
-        <button 
+        <button
           className={`tab-btn ${activeTab === 'prompt' ? 'active' : ''}`}
           onClick={() => setActiveTab('prompt')}
         >
           System Prompt
         </button>
+        {showDiff && (
+          <button
+            className={`tab-btn ${activeTab === 'diff' ? 'active' : ''}`}
+            onClick={() => setActiveTab('diff')}
+          >
+            Diff
+          </button>
+        )}
       </div>
 
       <div className="inspector-body">
@@ -116,6 +135,12 @@ export const AgentInspector: React.FC = () => {
                 )}
               </div>
             )}
+          </div>
+        )}
+
+        {activeTab === 'diff' && showDiff && (
+          <div className="tab-content">
+            <DiffView original={inputCode} modified={agent.codeContent || ''} />
           </div>
         )}
 

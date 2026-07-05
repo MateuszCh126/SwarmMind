@@ -27,9 +27,11 @@ Kod pisze subagent Haiku (model `haiku`); ja projektuję, weryfikuję grep-em + 
 - „Testuj klucz" w Ustawieniach: realny, lekki ping do API wybranego providera
   (200 = OK, 429 = klucz OK ale limit, 401/403 = odrzucony). Waliduje zanim odpalisz rój.
 
+- Diff: zakładka „Diff" w Inspectorze Codera — liniowy diff LCS oryginału vs kodu
+  zrefaktoryzowanego, z licznikiem +/- i podświetleniem dodanych/usuniętych linii.
+
 ## Następne (kolejność)
-4. [ ] **Diff**: oryginał vs zrefaktoryzowany kod (side-by-side lub podświetlenie).
-5. [ ] **Edytowalne system prompty agentów** w Inspectorze (realna konfiguracja).
+5. [ ] **Edytowalne system prompty agentów** w Inspectorze (realna konfiguracja, trwałe).
 7. [ ] **Metryki**: czas i (jeśli API zwraca) zużycie tokenów per agent.
 8. [ ] **Dostępność/responsywność**: focus, prefers-reduced-motion, mobile.
 9. [ ] **Ponów pojedynczy krok** agenta ręcznie po błędzie.
