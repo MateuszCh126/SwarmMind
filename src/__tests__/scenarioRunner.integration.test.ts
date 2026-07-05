@@ -101,6 +101,49 @@ describe('runSwarmOrchestration — pełny cykl end-to-end (fetch zmockowany)', 
     expect(state.tasks.find((t) => t.id === 'task_review')?.status).toBe('completed');
   });
 
+  it('nie wywala się, gdy blueprint jest obiektem (regresja: realny kształt odpowiedzi Gemini)', async () => {
+    // Gemini w trybie JSON zwraca blueprint jako zagnieżdżony obiekt, nie string.
+    vi.stubGlobal('fetch', makeFetch({
+      architect: {
+        explanation: 'Plan z krokami.',
+        blueprint: { goal: 'memoizacja', method: 'top-down', steps: [{ n: 1, desc: 'cache' }] },
+      },
+      coder: { explanation: 'Kod.', code: GOOD_FIB },
+      tester: { explanation: 'Testy.', testCode: FIB_TESTS },
+      reviewer: { explanation: 'OK.', approved: true, feedback: 'LGTM' },
+    }));
+
+    await runSwarmOrchestration();
+    const state = useSwarmStore.getState();
+
+    expect(state.isRunning).toBe(false);
+    expect(state.agents.architect.status).toBe('success');
+    expect(state.agents.architect.codeContent).toContain('memoizacja'); // obiekt zserializowany do tekstu
+    expect(state.agents.reviewer.status).toBe('success');
+  });
+
+  it('normalizuje approved podane jako string "true"/"false"', async () => {
+    let reviewerCall = 0;
+    vi.stubGlobal('fetch', makeFetch({
+      architect: { explanation: 'Plan.', blueprint: 'memoizacja' },
+      coder: { explanation: 'Kod.', code: GOOD_FIB },
+      tester: { explanation: 'Testy.', testCode: FIB_TESTS },
+      reviewer: () => {
+        reviewerCall += 1;
+        // Pierwsza iteracja: string "false" musi być traktowany jako ODRZUCENIE.
+        return reviewerCall === 1
+          ? { explanation: 'Nie.', approved: 'false', feedback: 'Popraw.' }
+          : { explanation: 'Tak.', approved: 'true', feedback: 'OK.' };
+      },
+    }));
+
+    await runSwarmOrchestration();
+    const state = useSwarmStore.getState();
+
+    expect(reviewerCall).toBe(2); // "false" wymusiło pętlę, "true" zatwierdziło
+    expect(state.agents.reviewer.status).toBe('success');
+  });
+
   it('kończy błędem po 3 nieudanych iteracjach, gdy kod realnie oblewa testy', async () => {
     vi.stubGlobal('fetch', makeFetch({
       architect: { explanation: 'Plan.', blueprint: 'memoizacja' },

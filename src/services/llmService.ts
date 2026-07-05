@@ -45,6 +45,32 @@ export function cleanJSONString(str: string): string {
   return cleaned;
 }
 
+// Błędy przejściowe (przeciążenie/limit) nie powinny zabijać całego roju — ponawiamy
+// z rosnącym odstępem, zanim zgłosimy błąd użytkownikowi.
+const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 529]);
+
+async function fetchWithRetry(url: string, options: RequestInit, retries = 2): Promise<Response> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const response = await fetch(url, options);
+      if (RETRYABLE_STATUS.has(response.status) && attempt < retries) {
+        await new Promise((resolve) => setTimeout(resolve, 800 * (attempt + 1)));
+        continue;
+      }
+      return response;
+    } catch (error) {
+      lastError = error;
+      if (attempt < retries) {
+        await new Promise((resolve) => setTimeout(resolve, 800 * (attempt + 1)));
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw lastError;
+}
+
 export async function callLLM({
   systemPrompt,
   userPrompt,
@@ -78,7 +104,7 @@ export async function callLLM({
 async function callGemini(key: string, system: string, user: string): Promise<any> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${PROVIDER_MODELS.gemini}:generateContent`;
   
-  const response = await fetch(url, {
+  const response = await fetchWithRetry(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -116,7 +142,7 @@ async function callGemini(key: string, system: string, user: string): Promise<an
 async function callOpenAI(key: string, system: string, user: string): Promise<any> {
   const url = 'https://api.openai.com/v1/chat/completions';
   
-  const response = await fetch(url, {
+  const response = await fetchWithRetry(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -155,7 +181,7 @@ async function callOpenAI(key: string, system: string, user: string): Promise<an
 async function callAnthropic(key: string, system: string, user: string): Promise<any> {
   const url = 'https://api.anthropic.com/v1/messages';
   
-  const response = await fetch(url, {
+  const response = await fetchWithRetry(url, {
     method: 'POST',
     headers: {
       'x-api-key': key,

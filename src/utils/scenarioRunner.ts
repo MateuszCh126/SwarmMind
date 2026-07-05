@@ -9,6 +9,19 @@ const delay = (ms: number) => {
   return new Promise((resolve) => setTimeout(resolve, ms / speed));
 };
 
+// LLM-y (zwłaszcza w trybie responseMimeType: application/json) potrafią zwrócić
+// pole jako zagnieżdżony obiekt/tablicę zamiast stringa. Zamiast wywalać cały rój,
+// sprowadzamy wartość do czytelnego tekstu.
+const asText = (value: unknown): string => {
+  if (typeof value === 'string') return value;
+  if (value === null || value === undefined) return '';
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return String(value);
+  }
+};
+
 // Helper to check if the swarm is paused, blocking until unpaused
 const checkPause = async () => {
   while (true) {
@@ -68,14 +81,14 @@ export async function runSwarmOrchestration() {
     
     await checkPause();
     
-    if (typeof architectResult?.blueprint !== 'string' || !architectResult.blueprint) {
+    const architectExplanation = asText(architectResult?.explanation);
+    blueprint = asText(architectResult?.blueprint);
+    if (!blueprint) {
       throw new Error('Architect zwrócił niekompletną odpowiedź (brak pola blueprint).');
     }
-    if (typeof architectResult?.explanation !== 'string' || !architectResult.explanation) {
+    if (!architectExplanation) {
       throw new Error('Architect zwrócił niekompletną odpowiedź (brak pola explanation).');
     }
-    
-    blueprint = architectResult.blueprint;
     store.updateAgent('architect', { 
       status: 'success', 
       currentTask: 'Zakończono planowanie.',
@@ -84,7 +97,7 @@ export async function runSwarmOrchestration() {
     store.addLog({
       agentId: 'architect',
       agentName: 'AetherArchitect',
-      message: `Stworzyłem plan refaktoryzacji:\n${architectResult.explanation}`,
+      message: `Stworzyłem plan refaktoryzacji:\n${architectExplanation}`,
       type: 'action',
       details: blueprint
     });
@@ -145,14 +158,14 @@ export async function runSwarmOrchestration() {
       
       await checkPause();
       
-      if (typeof coderResult?.code !== 'string' || !coderResult.code) {
+      const coderExplanation = asText(coderResult?.explanation);
+      refactoredCode = asText(coderResult?.code);
+      if (!refactoredCode) {
         throw new Error('Coder zwrócił niekompletną odpowiedź (brak pola code).');
       }
-      if (typeof coderResult?.explanation !== 'string' || !coderResult.explanation) {
+      if (!coderExplanation) {
         throw new Error('Coder zwrócił niekompletną odpowiedź (brak pola explanation).');
       }
-      
-      refactoredCode = coderResult.code;
       
       store.updateAgent('coder', { 
         status: 'success', 
@@ -163,7 +176,7 @@ export async function runSwarmOrchestration() {
       store.addLog({
         agentId: 'coder',
         agentName: 'ValkyrieCoder',
-        message: `Kod zaimplementowany:\n${coderResult.explanation}`,
+        message: `Kod zaimplementowany:\n${coderExplanation}`,
         type: 'code',
         details: refactoredCode
       });
@@ -208,14 +221,14 @@ export async function runSwarmOrchestration() {
 
       await checkPause();
 
-      if (typeof testerResult?.testCode !== 'string' || !testerResult.testCode) {
+      const testerExplanation = asText(testerResult?.explanation);
+      unitTests = asText(testerResult?.testCode);
+      if (!unitTests) {
         throw new Error('Tester zwrócił niekompletną odpowiedź (brak pola testCode).');
       }
-      if (typeof testerResult?.explanation !== 'string' || !testerResult.explanation) {
+      if (!testerExplanation) {
         throw new Error('Tester zwrócił niekompletną odpowiedź (brak pola explanation).');
       }
-
-      unitTests = testerResult.testCode;
 
       // REALNE wykonanie testów w izolowanym Web Workerze — bez symulacji.
       store.updateAgent('tester', { status: 'working', currentTask: 'Uruchamiam testy w izolowanym workerze...' });
@@ -287,15 +300,19 @@ export async function runSwarmOrchestration() {
       if (reviewerResult?.approved === undefined) {
         throw new Error('Reviewer zwrócił niekompletną odpowiedź (brak pola approved).');
       }
-      if (typeof reviewerResult?.feedback !== 'string' || !reviewerResult.feedback) {
+      const reviewerExplanation = asText(reviewerResult?.explanation);
+      reviewerFeedback = asText(reviewerResult?.feedback);
+      if (!reviewerFeedback) {
         throw new Error('Reviewer zwrócił niekompletną odpowiedź (brak pola feedback).');
       }
-      if (typeof reviewerResult?.explanation !== 'string' || !reviewerResult.explanation) {
+      if (!reviewerExplanation) {
         throw new Error('Reviewer zwrócił niekompletną odpowiedź (brak pola explanation).');
       }
-      
-      const approved = reviewerResult.approved;
-      reviewerFeedback = reviewerResult.feedback;
+
+      // approved bywa boolem albo stringiem "true"/"false" — normalizujemy.
+      const approved = typeof reviewerResult.approved === 'boolean'
+        ? reviewerResult.approved
+        : String(reviewerResult.approved).toLowerCase() === 'true';
       
       store.updateAgent('reviewer', {
         status: approved ? 'success' : 'error',
@@ -306,7 +323,7 @@ export async function runSwarmOrchestration() {
       store.addLog({
         agentId: 'reviewer',
         agentName: 'SpecterReviewer',
-        message: `Werdykt Code Review: ${approved ? 'ZATWIERDZONY' : 'ODRZUCONY'}\nPodsumowanie: ${reviewerResult.explanation}`,
+        message: `Werdykt Code Review: ${approved ? 'ZATWIERDZONY' : 'ODRZUCONY'}\nPodsumowanie: ${reviewerExplanation}`,
         type: approved ? 'success' : 'error',
         details: reviewerFeedback
       });
