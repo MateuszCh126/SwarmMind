@@ -20,7 +20,7 @@ function oblicz_liczbe_fibonacciego(n) {
 export const Sidebar: React.FC = () => {
   const store = useSwarmStore();
   
-  const [goal, setGoal] = useState('Zoptymalizuj funkcję, zlikwiduj powolną rekurencję (zastosuj spamiętywanie lub iterację) i dodaj typowanie.');
+  const [goal, setGoal] = useState('Zoptymalizuj funkcję, zlikwiduj powolną rekurencję (zastosuj spamiętywanie lub iterację) i dodaj typowanie JSDoc.');
   const [code, setCode] = useState(defaultCode);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -51,7 +51,7 @@ export const Sidebar: React.FC = () => {
   const handleReset = () => {
     store.resetSwarm();
     setCode(defaultCode);
-    setGoal('Zoptymalizuj funkcję, zlikwiduj powolną rekurencję (zastosuj spamiętywanie lub iterację) i dodaj typowanie.');
+    setGoal('Zoptymalizuj funkcję, zlikwiduj powolną rekurencję (zastosuj spamiętywanie lub iterację) i dodaj typowanie JSDoc.');
     setErrorMsg('');
   };
 

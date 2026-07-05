@@ -1,5 +1,6 @@
 import { useSwarmStore } from '../store/useSwarmStore';
 import { callLLM } from '../services/llmService';
+import { runTests } from '../services/testRunner';
 import type { AgentId } from '../types';
 
 // Helper to wait for a given duration (adjustable by speed factor)
@@ -52,7 +53,7 @@ export async function runSwarmOrchestration() {
       type: 'thought'
     });
     
-    await delay(1500); // Visual breathing room
+    await delay(500);
     await checkPause();
     
     store.updateAgent('architect', { status: 'working' });
@@ -97,7 +98,7 @@ export async function runSwarmOrchestration() {
       type: 'system'
     });
     
-    await delay(2000);
+    await delay(400);
     await checkPause();
     store.updateConnection('architect', 'coder', { isActive: false, status: 'idle' });
     
@@ -127,9 +128,9 @@ export async function runSwarmOrchestration() {
         type: 'thought'
       });
       
-      await delay(1500);
+      await delay(500);
       await checkPause();
-      
+
       store.updateAgent('coder', { status: 'working' });
       
       const coderResult = await callLLM({
@@ -176,7 +177,7 @@ export async function runSwarmOrchestration() {
         type: 'system'
       });
       
-      await delay(2000);
+      await delay(400);
       await checkPause();
       store.updateConnection('coder', 'tester', { isActive: false, status: 'idle' });
       
@@ -185,53 +186,60 @@ export async function runSwarmOrchestration() {
       // -------------------------------------------------------------
       store.setActiveTaskIndex(2);
       store.setCurrentStepDescription('Krok 3/4: TracerTester pisze i uruchamia testy jednostkowe...');
-      store.updateAgent('tester', { status: 'thinking', currentTask: 'Pisanie testów jednostkowych i symulowanie wykonania...' });
+      store.updateAgent('tester', { status: 'thinking', currentTask: 'Pisanie testów jednostkowych...' });
       store.addLog({
         agentId: 'tester',
         agentName: 'TracerTester',
         message: 'Rozpoczynam generowanie zestawu testów jednostkowych dla zrefaktoryzowanego kodu.',
         type: 'thought'
       });
-      
-      await delay(1500);
+
+      await delay(500);
       await checkPause();
       store.updateAgent('tester', { status: 'working' });
-      
+
       const testerResult = await callLLM({
         agentId: 'tester',
         agentRole: store.agents.tester.role,
         systemPrompt: store.agents.tester.systemPrompt,
-        userPrompt: `Zrefaktoryzowany kod:\n\`\`\`\n${refactoredCode}\n\`\`\`\n\nOryginalny kod:\n\`\`\`\n${inputCode}\n\`\`\`\n\nCel refaktoryzacji:\n${goal}\n\nWygeneruj testy jednostkowe. Twoja odpowiedź MUSI być czystym JSON z polami 'explanation', 'testCode', 'testResults' i 'success' (boolean).`,
+        userPrompt: `Zrefaktoryzowany kod:\n\`\`\`\n${refactoredCode}\n\`\`\`\n\nOryginalny kod:\n\`\`\`\n${inputCode}\n\`\`\`\n\nCel refaktoryzacji:\n${goal}\n\nWygeneruj testy jednostkowe w czystym JavaScript (styl describe/it/expect, bez importów). Twoja odpowiedź MUSI być czystym JSON z polami 'explanation' oraz 'testCode'. NIE zgaduj wyników — testy zostaną naprawdę uruchomione.`,
         settings
       });
-      
+
       await checkPause();
-      
+
       if (typeof testerResult?.testCode !== 'string' || !testerResult.testCode) {
         throw new Error('Tester zwrócił niekompletną odpowiedź (brak pola testCode).');
       }
-      if (typeof testerResult?.testResults !== 'string' || !testerResult.testResults) {
-        throw new Error('Tester zwrócił niekompletną odpowiedź (brak pola testResults).');
+      if (typeof testerResult?.explanation !== 'string' || !testerResult.explanation) {
+        throw new Error('Tester zwrócił niekompletną odpowiedź (brak pola explanation).');
       }
-      if (testerResult?.success === undefined) {
-        throw new Error('Tester zwrócił niekompletną odpowiedź (brak pola success).');
-      }
-      
+
       unitTests = testerResult.testCode;
-      testResults = testerResult.testResults;
-      const testsPassed = testerResult.success;
-      
-      store.updateAgent('tester', { 
+
+      // REALNE wykonanie testów w izolowanym Web Workerze — bez symulacji.
+      store.updateAgent('tester', { status: 'working', currentTask: 'Uruchamiam testy w izolowanym workerze...' });
+      const testRun = await runTests(refactoredCode, unitTests);
+      await checkPause();
+
+      const testsPassed = testRun.success;
+      testResults = testRun.error
+        ? (testRun.log ? `${testRun.log}\n\n${testRun.error}` : testRun.error)
+        : `${testRun.log}\n\nRAZEM: ${testRun.passed} zaliczonych, ${testRun.failed} niezaliczonych.`;
+
+      store.updateAgent('tester', {
         status: testsPassed ? 'success' : 'error',
-        currentTask: testsPassed ? 'Testy zaliczone.' : 'Wykryto błędy w testach.',
+        currentTask: testsPassed
+          ? `Testy zaliczone (${testRun.passed}/${testRun.passed + testRun.failed}).`
+          : 'Wykryto niezaliczone testy lub błąd wykonania.',
         codeContent: unitTests,
         testContent: testResults
       });
-      
+
       store.addLog({
         agentId: 'tester',
         agentName: 'TracerTester',
-        message: `Zestaw testów utworzony. Wynik uruchomienia: ${testsPassed ? 'SUKCES' : 'BŁĄD'}`,
+        message: `Testy wykonane w workerze. Wynik: ${testsPassed ? 'SUKCES' : 'BŁĄD'} (${testRun.passed} zaliczonych, ${testRun.failed} niezaliczonych)`,
         type: testsPassed ? 'success' : 'error',
         details: `KOD TESTÓW:\n${unitTests}\n\nWYNIK URUCHOMIENIA:\n${testResults}`
       });
@@ -245,7 +253,7 @@ export async function runSwarmOrchestration() {
         type: 'system'
       });
       
-      await delay(2000);
+      await delay(400);
       await checkPause();
       store.updateConnection('tester', 'reviewer', { isActive: false, status: 'idle' });
       
@@ -262,7 +270,7 @@ export async function runSwarmOrchestration() {
         type: 'thought'
       });
       
-      await delay(1500);
+      await delay(500);
       await checkPause();
       store.updateAgent('reviewer', { status: 'working' });
       
@@ -333,7 +341,7 @@ export async function runSwarmOrchestration() {
         store.updateTask('task_testing', { status: 'pending' });
         store.updateTask('task_review', { status: 'pending' });
         
-        await delay(2000);
+        await delay(400);
         await checkPause();
         store.updateConnection('reviewer', 'coder', { isActive: false, status: 'idle' });
         
