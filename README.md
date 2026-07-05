@@ -94,6 +94,17 @@ npm run test
 4.  Click **Ustawienia** in the top right, choose your provider, enter your API key, and click **Zapisz**.
 5.  Input a refactoring target (or use the pre-loaded recursive Fibonacci code) and click **Uruchom Swarm**!
 
+### Provider browser compatibility
+Because the app calls the LLM APIs directly from the browser (no backend), provider support depends on each vendor's CORS policy:
+
+| Provider | Works directly from the browser? |
+|----------|----------------------------------|
+| **Google Gemini** (`gemini-2.5-flash`) | ✅ Yes — recommended. The free tier is enough to run the full swarm. |
+| **Anthropic Claude** (`claude-sonnet-5`) | ✅ Yes, via the `anthropic-dangerous-direct-browser-access` header (already set). |
+| **OpenAI** (`gpt-4o-mini`) | ⚠️ May be blocked by CORS depending on account/region; a proxy/backend can be needed. |
+
+For a zero-setup run, use **Gemini**. Since the refactored code is executed for real in the browser, the refactoring target must be runnable **JavaScript**.
+
 ### Production Build
 To build the project for production:
 ```bash
