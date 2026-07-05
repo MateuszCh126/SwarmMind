@@ -9,6 +9,9 @@ export const AgentGraph: React.FC = () => {
   const activeAgentId = useSwarmStore((state) => state.activeAgentId);
   const selectAgent = useSwarmStore((state) => state.selectAgent);
   const currentStep = useSwarmStore((state) => state.currentStepDescription);
+  const logs = useSwarmStore((state) => state.logs);
+  const isRunning = useSwarmStore((state) => state.isRunning);
+  const isError = !isRunning && logs.length > 0 && logs[logs.length - 1].type === 'error';
 
   const handleNodeClick = (id: AgentId) => {
     selectAgent(activeAgentId === id ? null : id);
@@ -54,8 +57,8 @@ export const AgentGraph: React.FC = () => {
 
   return (
     <div className="graph-container">
-      <div className="graph-step-overlay">
-        <span className="step-title">Orkiestrator Swarmu:</span>
+      <div className={`graph-step-overlay ${isError ? 'error' : ''}`}>
+        <span className="step-title">{isError ? 'Błąd:' : 'Orkiestrator Swarmu:'}</span>
         <span className="step-desc">{currentStep}</span>
       </div>
 

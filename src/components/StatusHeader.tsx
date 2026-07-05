@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSwarmStore } from '../store/useSwarmStore';
 import './StatusHeader.css';
 
@@ -11,6 +11,20 @@ export const StatusHeader: React.FC<StatusHeaderProps> = ({ onOpenSettings }) =>
   const isPaused = useSwarmStore((state) => state.isPaused);
   const logs = useSwarmStore((state) => state.logs);
   const settings = useSwarmStore((state) => state.settings);
+
+  // Licznik czasu przebiegu — sygnalizuje, że rój naprawdę pracuje (wywołania API
+  // bywają wolne), żeby czekanie nie wyglądało jak zawieszenie.
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    if (!isRunning) {
+      setElapsed(0);
+      return;
+    }
+    const start = Date.now();
+    const id = window.setInterval(() => setElapsed(Math.floor((Date.now() - start) / 1000)), 1000);
+    return () => window.clearInterval(id);
+  }, [isRunning]);
+  const elapsedLabel = `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, '0')}`;
 
   // Calculate status
   let statusText = 'Bezczynny';
@@ -58,6 +72,13 @@ export const StatusHeader: React.FC<StatusHeaderProps> = ({ onOpenSettings }) =>
           <span className={`status-dot ${statusClass}`}></span>
           <span className="status-text">{statusText}</span>
         </div>
+
+        {isRunning && (
+          <div className="header-kpi">
+            <span className="kpi-label">Czas:</span>
+            <span className="kpi-value elapsed-value">{elapsedLabel}</span>
+          </div>
+        )}
 
         <div className="header-kpi">
           <span className="kpi-label">Silnik AI:</span>

@@ -162,6 +162,7 @@ describe('runSwarmOrchestration — pełny cykl end-to-end (fetch zmockowany)', 
     expect(state.agents.tester.status).toBe('error');
     const lastLog = state.logs[state.logs.length - 1];
     expect(lastLog.type).toBe('error');
-    expect(state.currentStepDescription.toLowerCase()).toContain('błąd');
+    // Komunikat jest teraz przyjazny (bez surowego "Błąd:") — po 3 iteracjach mówi o iteracjach.
+    expect(state.currentStepDescription).toMatch(/iteracj/i);
   });
 });

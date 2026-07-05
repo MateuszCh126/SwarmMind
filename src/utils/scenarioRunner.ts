@@ -1,6 +1,7 @@
 import { useSwarmStore } from '../store/useSwarmStore';
 import { callLLM } from '../services/llmService';
 import { runTests } from '../services/testRunner';
+import { friendlyError } from './friendlyError';
 import type { AgentId } from '../types';
 
 // LLM-y (zwłaszcza w trybie responseMimeType: application/json) potrafią zwrócić
@@ -365,12 +366,15 @@ export async function runSwarmOrchestration() {
       }
     });
     
+    const raw = String(err?.message || err);
+    const fe = friendlyError(raw);
     store.addLog({
       agentName: 'System',
-      message: `Błąd działania roju: ${err.message || err}`,
-      type: 'error'
+      message: fe.hint ? `${fe.message} — ${fe.hint}` : fe.message,
+      type: 'error',
+      details: raw // pełna, surowa treść pod „Pokaż kod" dla diagnostyki
     });
-    store.setCurrentStepDescription(`Błąd: ${err.message || err}`);
+    store.setCurrentStepDescription(fe.hint ? `${fe.message} — ${fe.hint}` : fe.message);
     store.setRunningState(false);
   }
 }

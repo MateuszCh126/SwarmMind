@@ -18,23 +18,34 @@
   z-index: 10;
   display: flex;
   gap: 8px;
-  align-items: center;
+  align-items: baseline;
   background-color: rgba(18, 18, 21, 0.85);
   backdrop-filter: blur(12px);
   border: 1px solid var(--border-color);
-  padding: 8px 16px;
-  border-radius: 20px;
+  padding: 10px 16px;
+  border-radius: 14px;
   font-size: 12.5px;
-  max-width: 90%;
+  line-height: 1.45;
+  max-width: min(560px, 88%);
   box-shadow: var(--shadow-sm);
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+/* Stan błędu: spokojny czerwony akcent zamiast surowego zrzutu w jednej linii. */
+.graph-step-overlay.error {
+  border-color: rgba(255, 69, 58, 0.4);
+  background-color: rgba(40, 20, 22, 0.9);
 }
 
 .step-title {
   color: var(--text-secondary);
   font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.graph-step-overlay.error .step-title {
+  color: var(--accent-red);
 }
 
 .step-desc {

@@ -103,6 +103,13 @@
   font-weight: 500;
 }
 
+.elapsed-value {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+  min-width: 34px;
+  display: inline-block;
+}
+
 .settings-trigger {
   display: flex;
   align-items: center;
