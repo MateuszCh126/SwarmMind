@@ -37,7 +37,8 @@ Kod pisze subagent Haiku (model `haiku`); ja projektuję, weryfikuję grep-em + 
   callLLM/runTests) pokazany w Inspectorze (Konfiguracja → „Czas pracy").
 
 ## Następne (kolejność)
-8. [ ] **Dostępność/responsywność**: focus, prefers-reduced-motion, mobile.
+- Dostępność: widoczny focus klawiaturą (focus-visible), prefers-reduced-motion,
+  responsywne szerokości paneli na węższych ekranach.
 9. [ ] **Ponów pojedynczy krok** agenta ręcznie po błędzie.
 
 ## Uwaga o limitach
